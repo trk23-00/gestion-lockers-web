@@ -1,5 +1,5 @@
-"use client"
-import { redirect } from "next/navigation";
+import PanelGeneral from "@/components/General-frames/PanelGeneral";
+
 export default function Home() {
-  redirect("/registerEmpleado");
+  return <PanelGeneral />;
 }
