@@ -3,191 +3,105 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import styles from "@/components/inicio_sesion/LoginForm.module.css"
+import styles from "@/components/inicio_sesion/LoginForm.module.css";
 import AuthButton from "./AuthButton";
 import AuthLayout from "./AuthLayout";
+import Captcha from "./Captcha";
+import { postJson } from "@/lib/api";
 
 const LoginForm = () => {
-
   const router = useRouter();
 
   const [correo, setCorreo] = useState("");
   const [password, setPassword] = useState("");
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaKey, setCaptchaKey] = useState(0);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [cargando, setCargando] = useState(false);
 
-  const [errorMessage, setErrorMessage] =
-    useState("");
-
-  const [successMessage, setSuccessMessage] =
-    useState("");
-  async function ingresarInvitado(){
-
-    // =========================
-    // CERRAR SESIÓN SI EXISTE
-    // =========================
-    await fetch(
-      "/api/auth/logout",
-      {
-        method:"POST"
-      }
-    );
-    // =========================
-    // ENTRAR COMO INVITADO
-    // =========================
-
-    router.refresh();
-
-    router.push("/dashboard");
-
+  function refrescarCaptcha() {
+    setCaptchaToken(null);
+    setCaptchaKey((key) => key + 1);
   }
+
   async function login() {
-
-    if(!correo || !password){
-
-      setErrorMessage(
-        "Debe llenar todos los campos"
-      );
-
-      setSuccessMessage("");
-
+    if (!correo.trim() || !password) {
+      setErrorMessage("Debe llenar todos los campos");
       return;
-
     }
 
-    try {
-
-      const response = await fetch(
-        "/api/auth/login",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            correo,
-            password,
-          }),
-        }
-      );
-
-      const data = await response.json();
-
-      if(!response.ok){
-
-        setErrorMessage(data.message);
-
-        setSuccessMessage("");
-
-        return;
-
-      }
-
-      setErrorMessage("");
-
-      setSuccessMessage(
-        "Inicio de sesión exitoso"
-      );
-
-      router.refresh();
-
-      router.push("/dashboard");
-
-    } catch(error){
-
-      console.log(error);
-
-      setErrorMessage(
-        "Error al conectar con el servidor"
-      );
-
-      setSuccessMessage("");
-
+    if (!captchaToken) {
+      setErrorMessage("Debe completar el captcha");
+      return;
     }
 
+    setErrorMessage("");
+    setCargando(true);
+
+    const respuesta = await postJson("/api/auth/login", {
+      correo,
+      password,
+      captcha: captchaToken,
+    });
+
+    setCargando(false);
+
+    if (!respuesta.ok) {
+      setErrorMessage(respuesta.message);
+      refrescarCaptcha();
+      return;
+    }
+
+    router.push("/");
+    router.refresh();
   }
 
   return (
-
-    <AuthLayout title="Iniciar Sesión">
-
+    <AuthLayout title="INICIAR SESIÓN" onSubmit={login}>
       <div className={styles.inputGroup}>
-
-        <label>
+        <label className={styles.label} htmlFor="correo">
           Correo Electrónico
         </label>
 
         <input
+          id="correo"
           type="email"
-          placeholder="correo@gmail.com"
+          placeholder="Ingresa tu correo electrónico"
+          autoComplete="email"
           value={correo}
-          onChange={(e)=>setCorreo(e.target.value)}
+          onChange={(e) => setCorreo(e.target.value)}
         />
-
       </div>
 
       <div className={styles.inputGroup}>
-
-        <label>
+        <label className={styles.label} htmlFor="password">
           Contraseña
         </label>
 
         <input
+          id="password"
           type="password"
-          placeholder="********"
+          placeholder="Ingresa tu contraseña"
+          autoComplete="current-password"
           value={password}
-          onChange={(e)=>setPassword(e.target.value)}
+          onChange={(e) => setPassword(e.target.value)}
         />
-
       </div>
 
-      {
-        errorMessage && (
-          <p className={styles.errorText}>
-            {errorMessage}
-          </p>
-        )
-      }
+      <Captcha onChange={setCaptchaToken} refreshKey={captchaKey} />
 
-      {
-        successMessage && (
-          <p className={styles.successText}>
-            {successMessage}
-          </p>
-        )
-      }
+      {errorMessage && <p className={styles.errorText}>{errorMessage}</p>}
 
-      <Link
-        className={styles.forgotPassword}
-        href="/password"
-      >
-        Olvidé mi contraseña
-      </Link>
-
-      <AuthButton
-        text="Iniciar Sesión"
-        onClick={login}
-      />
-
-      <AuthButton
-        text="Ingresar Como Invitado"
-        onClick={ingresarInvitado}
-      />
-
-      <p>
-        ¿No tienes cuenta?{" "}
-
-        <Link
-          className={styles.registrarseTexto}
-          href="/register"
-        >
-          Registrarse
+      <p className={styles.textoEnlace}>
+        ¿Olvidaste tu contraseña?
+        <Link className={styles.enlace} href="/password">
+          Recuperar contraseña
         </Link>
-
       </p>
 
+      <AuthButton text="Iniciar Sesión" type="submit" disabled={cargando} />
     </AuthLayout>
-
   );
-
 };
 
 export default LoginForm;

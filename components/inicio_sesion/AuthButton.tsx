@@ -1,13 +1,15 @@
-import styles from "@/components/inicio_sesion/AuthButton.module.css"
+import styles from "@/components/inicio_sesion/AuthButton.module.css";
 
 type Props = {
   text: string;
-  onClick: () => void;
+  onClick?: () => void;
+  type?: "button" | "submit";
+  disabled?: boolean;
 };
 
-const AuthButton = ({ text, onClick}: Props) => {
+const AuthButton = ({ text, onClick, type = "button", disabled = false }: Props) => {
   return (
-    <button className={styles.authButton} onClick={onClick}>
+    <button className={styles.authButton} type={type} onClick={onClick} disabled={disabled}>
       {text}
     </button>
   );

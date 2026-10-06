@@ -1,0 +1,16 @@
+.mainContainer{
+    display: flex;
+    flex-direction: row;
+    gap: 1.875rem;
+    position: absolute;
+    top: 2rem;
+    left: 3rem;
+}
+
+.tituloContainer{
+    color: white;
+    font-size: 3rem;
+    display: flex;
+    flex-direction: column;
+    line-height: 3.75rem;
+}

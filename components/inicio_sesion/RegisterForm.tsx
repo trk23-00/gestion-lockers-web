@@ -1,177 +1,142 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
-import styles from "@/components/inicio_sesion/RegisterForm.module.css"
+import { useState, type ChangeEvent } from "react";
+import styles from "@/components/inicio_sesion/RegisterForm.module.css";
 import AuthButton from "./AuthButton";
 import AuthLayout from "./AuthLayout";
+import { postJson } from "@/lib/api";
+import { NIVEL_ROL, validarUsuario } from "@/lib/validaciones";
+
+const FORMULARIO_INICIAL = {
+  nombre: "",
+  apellido: "",
+  ci: "",
+  correo: "",
+  password: "",
+};
 
 const RegisterForm = () => {
-  const [nombre, setNombre] = useState("");
-  const [correo, setCorreo] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [formulario, setFormulario] = useState(FORMULARIO_INICIAL);
+  const [nivel, setNivel] = useState<number>(NIVEL_ROL.RECEPCIONISTA);
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
-  const passwordsMatch = password === confirmPassword;
-  async function register() {
-    // =========================
-    // VALIDACIONES FRONTEND
-    // =========================
-    if (
-      !nombre ||
-      !correo ||
-      !password ||
-      !confirmPassword
-    ) {
-      setErrorMessage("Debe llenar todos los campos");
-      setSuccessMessage("");
-      return;
-    }
-    if (!passwordsMatch) {
-      setErrorMessage("Las contraseñas no coinciden");
-      setSuccessMessage("");
-      return;
-    }
-    try {
-      // =========================
-      // FETCH BACKEND
-      // =========================
-      const response = await fetch(
-        "/api/auth/register",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            nombre,
-            correo,
-            password,
-          }),
-        }
-      );
-      const data = await response.json();
-      // =========================
-      // SI EL BACKEND FALLA
-      // =========================
-      if (!response.ok) {
-        setErrorMessage(data.message);
-        setSuccessMessage("");
-        return;
-      }
-      // =========================
-      // REGISTRO EXITOSO
-      // =========================
-      setErrorMessage("");
-      setSuccessMessage(
-        "Cuenta registrada correctamente"
-      );
-      console.log(data);
-      // limpiar inputs
-      setNombre("");
-      setCorreo("");
-      setPassword("");
-      setConfirmPassword("");
+  const [cargando, setCargando] = useState(false);
 
-    } catch (error) {
-      console.log(error);
-      setErrorMessage(
-        "Error al conectar con el servidor"
-      );
-      setSuccessMessage("");
+  function actualizar(campo: keyof typeof FORMULARIO_INICIAL) {
+    return (e: ChangeEvent<HTMLInputElement>) =>
+      setFormulario((actual) => ({ ...actual, [campo]: e.target.value }));
+  }
+
+  async function register() {
+    setSuccessMessage("");
+
+    const error = validarUsuario(formulario, false);
+
+    if (error) {
+      setErrorMessage(error);
+      return;
     }
+
+    setErrorMessage("");
+    setCargando(true);
+
+    const respuesta = await postJson("/api/auth/register-empleado", { ...formulario, nivel });
+
+    setCargando(false);
+
+    if (!respuesta.ok) {
+      setErrorMessage(respuesta.message);
+      return;
+    }
+
+    setSuccessMessage("Cuenta registrada correctamente");
+    setFormulario(FORMULARIO_INICIAL);
   }
 
   return (
-    <AuthLayout title={`Registrarse`}>
+    <AuthLayout title="CREAR CUENTA DE EMPLEADO" onSubmit={register}>
       <div className={styles.inputGroup}>
-        <label>
+        <label className={styles.label} htmlFor="nombre">
           Nombre
         </label>
         <input
+          id="nombre"
           type="text"
-          placeholder="Tu nombre"
-          value={nombre}
-          onChange={(e)=>setNombre(e.target.value)}
+          placeholder="Ingresa nombre del empleado"
+          value={formulario.nombre}
+          onChange={actualizar("nombre")}
         />
       </div>
+
       <div className={styles.inputGroup}>
-        <label>
+        <label className={styles.label} htmlFor="apellido">
+          Apellidos
+        </label>
+        <input
+          id="apellido"
+          type="text"
+          placeholder="Ingresa los apellidos del empleado"
+          value={formulario.apellido}
+          onChange={actualizar("apellido")}
+        />
+      </div>
+
+      <div className={styles.inputGroup}>
+        <label className={styles.label} htmlFor="ci">
+          Carnet de Identidad
+        </label>
+        <input
+          id="ci"
+          type="text"
+          inputMode="numeric"
+          placeholder="Ingresa el número de CI del empleado"
+          value={formulario.ci}
+          onChange={actualizar("ci")}
+        />
+      </div>
+
+      <div className={styles.inputGroup}>
+        <label className={styles.label} htmlFor="correo">
           Correo Electrónico
         </label>
         <input
+          id="correo"
           type="email"
-          placeholder="correo@gmail.com"
-          value={correo}
-          onChange={(e)=>setCorreo(e.target.value)}
+          placeholder="Ingresa el correo electrónico del empleado"
+          value={formulario.correo}
+          onChange={actualizar("correo")}
         />
       </div>
+
       <div className={styles.inputGroup}>
-        <label>
+        <label className={styles.label} htmlFor="cargo">
+          Cargo
+        </label>
+        <select id="cargo" value={nivel} onChange={(e) => setNivel(Number(e.target.value))}>
+          <option value={NIVEL_ROL.RECEPCIONISTA}>Recepcionista</option>
+          <option value={NIVEL_ROL.ALMACENERO}>Almacenero</option>
+        </select>
+      </div>
+
+      <div className={styles.inputGroup}>
+        <label className={styles.label} htmlFor="password">
           Contraseña
         </label>
         <input
+          id="password"
           type="password"
-          placeholder="********"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          autoComplete="new-password"
+          placeholder="Ingresa una contraseña para el empleado"
+          value={formulario.password}
+          onChange={actualizar("password")}
         />
       </div>
-      <div className={styles.inputGroup}>
-        <label>
-          Confirmar Contraseña
-        </label>
-        <input
-          type="password"
-          placeholder="********"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-        />
-      </div>
-      {
-        confirmPassword.length > 0 &&
-        !passwordsMatch && (
-          <p className={styles.errorText}>
-            Las contraseñas no coinciden
-          </p>
-        )
-      }
-      {
-        confirmPassword.length > 0 &&
-        passwordsMatch && (
-          <p className={styles.successText}>
-            Las contraseñas coinciden
-          </p>
-        )
-      }
-      {
-        errorMessage && (
-          <p className={styles.errorText}>
-            {errorMessage}
-          </p>
-        )
-      }
-      {
-        successMessage && (
-          <p className={styles.successText}>
-            {successMessage}
-          </p>
-        )
-      }
-      <AuthButton
-        text="Registrarse"
-        onClick={register}
-      />
-      <p>
-        ¿Ya tienes cuenta?{" "}
-        <Link
-          className={styles.iniciarSesionTexto}
-          href="/login"
-        >
-          Iniciar Sesión
-        </Link>
-      </p>
+
+      {errorMessage && <p className={styles.errorText}>{errorMessage}</p>}
+
+      {successMessage && <p className={styles.successText}>{successMessage}</p>}
+
+      <AuthButton text="Registrarse" type="submit" disabled={cargando} />
     </AuthLayout>
   );
 };

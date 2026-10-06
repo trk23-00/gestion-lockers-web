@@ -1,0 +1,111 @@
+.perfil {
+  position: absolute;
+  top: calc(100% + .75rem);
+  right: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .9375rem;
+  width: 21.25rem;
+  max-width: calc(100vw - 2rem);
+  padding: 1.5625rem;
+  background: #F98F1F;
+  border-radius: 30px;
+  box-shadow: 0 .5rem 1.5rem rgba(0, 0, 0, .25);
+}
+
+.perfil::before {
+  content: "";
+  position: absolute;
+  top: -.5rem;
+  right: 1.5rem;
+  width: 1rem;
+  height: 1rem;
+  background: #F98F1F;
+  border-radius: 3px 0 0 0;
+  transform: rotate(45deg);
+}
+
+.cabecera {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .5rem;
+}
+
+.avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 4.5rem;
+  height: 4.5rem;
+  border-radius: 50%;
+  background-color: white;
+  color: #F98F1F;
+}
+
+.avatar svg {
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+.nombre {
+  color: #ffffff;
+  font-size: 1.5rem;
+  text-align: center;
+}
+
+.rol {
+  padding: .25rem .9375rem;
+  background-color: white;
+  border-radius: 40px;
+  color: black;
+  font-size: .75rem;
+}
+
+.datos {
+  display: flex;
+  flex-direction: column;
+  gap: .75rem;
+  width: 100%;
+}
+
+.dato {
+  display: flex;
+  flex-direction: column;
+  gap: .25rem;
+}
+
+.etiqueta {
+  color: black;
+  font-size: .75rem;
+}
+
+.valor {
+  display: flex;
+  align-items: center;
+  min-height: 2.5rem;
+  padding: .5rem 1.25rem;
+  background-color: white;
+  border-radius: 40px;
+  color: black;
+  font-size: .875rem;
+  overflow-wrap: anywhere;
+}
+
+.acciones {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .625rem;
+  width: 100%;
+}
+
+.cargando {
+  color: #ffffff;
+}
+
+.errorText {
+  color: var(--error);
+}

@@ -1,14 +1,24 @@
 .authButton {
-    padding: 12px;
-    border: none;
-    border-radius: 8px;
-    background: #49BBBD;
-    color: white;
-    cursor: pointer;
-    border-radius: 36px;
+  padding: .75rem;
+  border: none;
+  background: #FFFFFF;
+  color: black;
+  cursor: pointer;
+  border-radius: 36px;
+  width: 15.625rem;
+  transition: .3s;
 }
 
 .authButton:hover {
-    background: #49BBBD;
-    transform: scale(1.03);
+  transform: scale(1.03);
+}
+
+.authButton:active {
+  transform: scale(1.0);
+}
+
+.authButton:disabled {
+  opacity: .6;
+  cursor: not-allowed;
+  transform: none;
 }

@@ -1,0 +1,42 @@
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+  width: 28.125rem;
+  max-width: 100%;
+}
+
+.inputGroup input,
+.inputGroup select {
+  height: 3.4375rem;
+  padding: 0 1.5625rem;
+  background-color: white;
+  border-radius: 40px;
+  outline: none;
+  color: black;
+}
+
+.label {
+  color: black;
+  font-size: 1rem;
+}
+
+.errorText {
+  color: var(--error);
+}
+
+.successText {
+  color: var(--success);
+}
+
+.textoEnlace {
+  display: flex;
+  gap: .625rem;
+  color: black;
+  font-size: .75rem;
+}
+
+.enlace {
+  color: blue;
+  text-decoration: underline;
+}

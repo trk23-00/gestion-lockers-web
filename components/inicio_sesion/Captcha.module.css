@@ -1,0 +1,6 @@
+.captcha {
+  display: flex;
+  justify-content: center;
+  width: 28.125rem;
+  max-width: 100%;
+}

@@ -2,128 +2,98 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import styles from "@/components/inicio_sesion/RecuperarContraseña.module.css"
+import styles from "@/components/inicio_sesion/RecuperarContraseña.module.css";
 import AuthButton from "./AuthButton";
 import AuthLayout from "./AuthLayout";
+import { postJson } from "@/lib/api";
+import { validarPassword } from "@/lib/validaciones";
 
 const RecuperarContraseña = () => {
   const router = useRouter();
+
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
-  const passwordsMatch =
-    password === confirmPassword;
+  const [cargando, setCargando] = useState(false);
+
+  const passwordsMatch = password === confirmPassword;
+
   async function recuperarContraseña() {
-    if(
-      !password ||
-      !confirmPassword
-    ){
-      setErrorMessage(
-        "Debe llenar todos los campos"
-      );
+    if (!password || !confirmPassword) {
+      setErrorMessage("Debe llenar todos los campos");
       return;
     }
-    if(!passwordsMatch){
-      setErrorMessage(
-        "Las contraseñas no coinciden"
-      );
+
+    if (!passwordsMatch) {
+      setErrorMessage("Las contraseñas no coinciden");
       return;
     }
-    try {
-      const correo = localStorage.getItem(
-        "correoRecuperacion"
-      );
-      const response = await fetch(
-        "/api/auth/recuperar",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            correo,
-            password,
-          }),
-        }
-      );
-      const data = await response.json();
-      if(!response.ok){
-        setErrorMessage(data.message);
-        return;
-      }
-      setErrorMessage("");
-      setSuccessMessage(data.message);
-      localStorage.removeItem(
-        "correoRecuperacion"
-      );
-      router.push("/login");
-    } catch(error){
-      console.log(error);
-      setErrorMessage(
-        "Error interno"
-      );
+
+    const errorPassword = validarPassword(password);
+
+    if (errorPassword) {
+      setErrorMessage(errorPassword);
+      return;
     }
+
+    setErrorMessage("");
+    setCargando(true);
+
+    const respuesta = await postJson("/api/auth/recuperar", { password });
+
+    setCargando(false);
+
+    if (!respuesta.ok) {
+      setErrorMessage(respuesta.message);
+      return;
+    }
+
+    router.push("/login");
   }
+
   return (
-    <AuthLayout title="Actualizar Contraseña">
+    <AuthLayout title="NUEVA CONTRASEÑA" onSubmit={recuperarContraseña}>
       <div className={styles.inputGroup}>
-        <label>
+        <label className={styles.label} htmlFor="password">
           Contraseña Nueva
         </label>
         <input
+          id="password"
           type="password"
-          placeholder="********"
+          autoComplete="new-password"
+          placeholder="Ingresa tu nueva contraseña"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
       </div>
+
       <div className={styles.inputGroup}>
-        <label>
+        <label className={styles.label} htmlFor="confirmPassword">
           Confirmar Contraseña
         </label>
         <input
+          id="confirmPassword"
           type="password"
-          placeholder="********"
+          autoComplete="new-password"
+          placeholder="Confirma tu nueva contraseña"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
         />
       </div>
-      {
-        confirmPassword.length > 0 &&
-        !passwordsMatch && (
-          <p className={styles.errorText}>
-            Las contraseñas no coinciden
-          </p>
-        )
-      }
-      {
-        confirmPassword.length > 0 &&
-        passwordsMatch && (
-          <p className={styles.successText}>
-            Las contraseñas coinciden
-          </p>
-        )
-      }
-      {
-        errorMessage && (
-          <p className={styles.errorText}>
-            {errorMessage}
-          </p>
-        )
-      }
-      {
-        successMessage && (
-          <p className={styles.successText}>
-            {successMessage}
-          </p>
-        )
-      }
-      <AuthButton
-        text="Actualizar Contraseña"
-        onClick={recuperarContraseña}
-      />
+
+      {confirmPassword.length > 0 && !passwordsMatch && (
+        <p className={styles.errorText}>Las contraseñas no coinciden</p>
+      )}
+
+      {confirmPassword.length > 0 && passwordsMatch && (
+        <p className={styles.successText}>Las contraseñas coinciden</p>
+      )}
+
+      {errorMessage && <p className={styles.errorText}>{errorMessage}</p>}
+
+      <AuthButton text="Actualizar Contraseña" type="submit" disabled={cargando} />
     </AuthLayout>
   );
 };
+
 export default RecuperarContraseña;

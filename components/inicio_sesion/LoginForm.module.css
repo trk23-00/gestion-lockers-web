@@ -1,38 +1,37 @@
 .inputGroup {
   display: flex;
   flex-direction: column;
-
-  gap: 8px;
+  gap: .5rem;
+  width: 28.125rem;
+  max-width: 100%;
 }
 
-.inputGroup input,
-.inputGroup select {
-  padding: 12px;
-
-  border: 1px solid #ccc;
-
-  border-radius: 8px;
+.inputGroup input {
+  height: 3.4375rem;
+  padding: 0 1.5625rem;
+  background-color: white;
+  border-radius: 40px;
+  outline: none;
+  color: black;
 }
-.forgotPassword {
-  background: none;
 
-  border: none;
+.label {
+  color: black;
+  font-size: 1rem;
+}
 
+.errorText {
+  color: var(--error);
+}
+
+.textoEnlace {
+  display: flex;
+  gap: .625rem;
+  color: black;
+  font-size: .75rem;
+}
+
+.enlace {
   color: blue;
-
-  cursor: pointer;
-
-  text-align: left;
-}
-
-.registrarseTexto{
-    color: blue;
-}
-
-.errorText{
-    color: var(--error);
-}
-
-.successText{
-    color: var(--success);
+  text-decoration: underline;
 }
