@@ -6,7 +6,7 @@ import styles from "../paneles-compartidos/Paneles.module.css";
 export default function PanelGeneral() {
   return <>
     <PanelLayout variant="publico" navigation={[{ label: "Inicio", href: "#inicio" }, { label: "Paquetes", href: "#servicios" }, { label: "Pagos", href: "#pagos" }, { label: "Avisos", href: "#avisos" }]}>
-      <HeroCopy title="Recibe y entrega paquetes sin complicaciones" description="Una sola plataforma para clientes, almacenes y administración. Cada paquete en su locker, cada persona con lo que necesita."><Link href="/login" className={styles.primary}>Empieza ahora</Link></HeroCopy>
+      <HeroCopy title="Recibe y entrega paquetes sin complicaciones" description="Tus paquetes, siempre bajo control. Centraliza la gestión de lockers, simplifica las entregas y conecta a clientes, almacenes y administradores desde un solo lugar."><Link href="/login" className={styles.primary}>Empieza ahora</Link></HeroCopy>
       <div className={styles.visual} aria-label="Ejemplos de avisos del servicio">
         <NoticeCard className={styles.publicDate} icon={<Icon name="calendar" />} title="2 días" detail="Personaliza tus plazos" />
         <NoticeCard className={styles.publicPackage} icon={<Icon name="package" />} title="Nuevo paquete" detail="Recibe un aviso cuando llegue" />
