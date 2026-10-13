@@ -1,5 +1,11 @@
-export type IconName = "package" | "calendar" | "check" | "clock" | "door" | "users" | "truck" | "wallet" | "bell";
+export type IconName = "package" | "calendar" | "check" | "clock" | "door" | "users" | "truck" | "wallet" | "bell" | "grid" | "chart" | "search" | "menu" | "arrow" | "logout";
 const paths: Record<IconName, string> = {
+  grid: "M3 3h7v7H3V3zm11 0h7v7h-7V3zM3 14h7v7H3v-7zm11 0h7v7h-7v-7z",
+  chart: "M4 3v18h17M8 16v-4m5 4V7m5 9v-6",
+  search: "M21 21l-5-5M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0",
+  menu: "M4 6h16M4 12h16M4 18h16",
+  arrow: "M5 12h14m-5-5l5 5-5 5",
+  logout: "M9 3H4v18h5m3-9h10m-4-4l4 4-4 4",
   package: "M3 7l9-4 9 4v10l-9 4-9-4V7zm0 0l9 4 9-4M12 11v10M7 5l10 4",
   calendar: "M5 5h14v16H5V5zm3-3v6m8-6v6M5 10h14M8 14h2m4 0h2m-8 3h2m4 0h2",
   check: "M9 3h6l6 6v6l-6 6H9l-6-6V9l6-6zm-2 9l3 3 7-7",

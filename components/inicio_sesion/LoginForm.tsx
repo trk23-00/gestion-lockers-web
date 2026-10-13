@@ -8,6 +8,7 @@ import AuthButton from "./AuthButton";
 import AuthLayout from "./AuthLayout";
 import Captcha from "./Captcha";
 import { postJson } from "@/lib/api";
+import { rutaPanel } from "@/lib/paneles";
 
 const LoginForm = () => {
   const router = useRouter();
@@ -38,7 +39,7 @@ const LoginForm = () => {
     setErrorMessage("");
     setCargando(true);
 
-    const respuesta = await postJson("/api/auth/login", {
+    const respuesta = await postJson<{ usuario: { nivel: number } }>("/api/auth/login", {
       correo,
       password,
       captcha: captchaToken,
@@ -52,7 +53,7 @@ const LoginForm = () => {
       return;
     }
 
-    router.push("/");
+    router.push(rutaPanel(respuesta.data?.usuario.nivel ?? 0));
     router.refresh();
   }
 

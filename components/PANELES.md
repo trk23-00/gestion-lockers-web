@@ -1,29 +1,22 @@
-# Paneles de Cofre Express
+# Paneles Generales de SGAP
 
-Componentes React con TypeScript y CSS Modules basados en `Frames/CLIENTE.png`, `Frames/PANEL-GENERAL.png` y `Frames/PANEL-PRINCIPAL- ALMACENES.png`.
+La página pública conserva el diseño de Cofre Express. Las cuatro rutas de usuarios usan `paneles-compartidos/UserDashboard`, con barra lateral, cuenta actual, indicadores y tarjetas de resumen, basados en `Frames/REF_UI_USERS.png`. Se reutiliza `/Logo.svg` y la paleta naranja, crema y marrón.
 
-## Vistas
-
-| Ruta | Componente | Función |
+| Ruta | Tipo de usuario | Menús del Panel General |
 | --- | --- | --- |
-| `/` | `General-frames/PanelGeneral` | Página pública |
-| `/paneles/cliente` | `Cliente-frames/PanelCliente` | Compras, envíos, pagos y avisos |
-| `/paneles/almacenes` | `Almacenes-frames/PanelAlmacenes` | Lockers, almacenamiento y traslados |
-| `/paneles/empleado` | `Empleado-frames/PanelEmpleado` | Recepción, entrega y gestión de clientes |
-| `/paneles/administrador` | `Administrador-frames/PanelAdministracion` | Empleados y supervisión de sucursales |
+| `/paneles/administrador` | Administrador | Recepción y entregas, almacenes y lockers, traslados, usuarios, pagos, notificaciones, reportes |
+| `/paneles/empleado` | Recepcionista | Recepción y entregas, almacenes y lockers, traslados, clientes |
+| `/paneles/almacenes` | Almacenero | Almacenes y lockers, traslados, usuarios del almacén |
+| `/paneles/cliente` | Cliente: comprador y comerciante | Mis paquetes (seguimiento y traslados), mis pagos, mis notificaciones |
 
-Los componentes compartidos están en `paneles-compartidos`. Las carpetas existentes se conservaron con sus nombres actuales. Los estilos incluyen adaptaciones para móviles, navegación con teclado, formularios etiquetados y mensajes accesibles.
+Los menús corresponden a las conexiones de `Frames/D_CASOS_DE_USO.jpeg`. El modelo actual reúne comprador y comerciante en un solo rol Cliente. Registro y entrega se agrupan en un menú; seguimiento y traslados se agrupan como Mis paquetes para clientes. Todos incluyen Panel General. Los enlaces llevan al resumen correspondiente dentro del panel: no se han implementado páginas completas para cada módulo.
 
-## Alcance de la demostración
+## Sesión y alcance
 
-Las rutas de paneles son vistas públicas de demostración, sin datos privados. Las búsquedas, filtros, selección de lockers, registros de ejemplo y confirmaciones operan en memoria y se reinician al recargar. Los indicadores del encabezado son cifras estáticas de referencia, no totales calculados de las tablas. Las dos representaciones de lockers y las tarjetas de traslados son demostraciones independientes. La tarifa semanal de 2 Bs proviene de la imagen, no de una configuración comercial validada.
+El encabezado consulta `/api/auth/me` y muestra nombre, apellido y rol de la sesión. Incluye correo y acciones de cuenta en su desplegable. Una sesión de otro rol se dirige a su propio panel. El inicio de sesión dirige al panel según el nivel del usuario, definido en `lib/paneles.ts`.
 
-No se modificaron los componentes de inicio de sesión, los registros existentes, las API de autenticación ni la base de datos. Se cambió la página principal para mostrar la vista pública. Las acciones de los paneles no invocan las API de creación de cuentas existentes.
+Sin sesión, las rutas siguen disponibles como vistas previas explícitas, sin datos privados. La comprobación en la interfaz no sustituye la autorización en el servidor al integrar módulos privados.
 
-## Reglas para una futura integración
+Los indicadores, paquetes, pagos, avisos y mapa son datos de ejemplo, identificados en pantalla. Los indicadores muestran resúmenes de toda la operación; la tabla muestra únicamente tres paquetes recientes, no sus totales. No se consultan ni modifican paquetes reales. La búsqueda y los filtros operan sobre esta tabla; el mapa permite consultar el estado de cada locker de ejemplo. No se ofrecen registros, cobros ni cambios de estado dentro del Panel General. Los componentes anteriores de gestión permanecen en sus carpetas para una futura implementación de los módulos.
 
-- Administrador: su cuenta se crea desde la base de datos; no existe formulario de alta de administradores en los paneles.
-- Empleados de almacenes y de recepción/entrega: solo los crea un administrador.
-- Cliente: un mismo perfil permite comprar y vender; solo lo crea un empleado de recepción/entrega.
-
-Al conectar los paneles a datos reales, estas reglas deben verificarse en el servidor y las rutas privadas deben protegerse con la sesión. Mostrar un formulario solo a un rol no constituye autorización. Las confirmaciones de recepción, entrega y traslado deberán persistir y coordinarse con la disponibilidad de lockers.
+No hay suscripciones, planes comerciales ni elementos ajenos a SGAP. El menú puede contraerse en escritorio y abrirse en móvil; se puede cerrar con Escape. Incluye enlaces de salto, nombres accesibles, estados que no dependen solo del color y soporte para movimiento reducido.
