@@ -1,16 +1,29 @@
-.mainContainer{
-    display: flex;
-    flex-direction: row;
-    gap: 1.875rem;
-    position: absolute;
-    top: 2rem;
-    left: 3rem;
+.mainContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 42px;
+  width: 100%;
+  min-height: 145px;
 }
-
-.tituloContainer{
-    color: white;
-    font-size: 3rem;
-    display: flex;
-    flex-direction: column;
-    line-height: 3.75rem;
+.logo {
+  width: clamp(82px, 8vw, 146px);
+  height: auto;
+  object-fit: contain;
+}
+.tituloContainer {
+  font-family: "Sansation", Arial, sans-serif;
+  font-weight: 700;
+  font-size: clamp(33px, 3vw, 48px);
+  color: #7c2d12;
+  letter-spacing: 1px;
+}
+@media (max-width: 480px) {
+  .mainContainer {
+    min-height: 85px;
+    gap: 20px;
+  }
+  .logo {
+    width: 82px;
+  }
 }

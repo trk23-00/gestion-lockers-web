@@ -59,50 +59,20 @@ const LoginForm = () => {
 
   return (
     <AuthLayout title="INICIAR SESIÓN" onSubmit={login}>
+      <p className={styles.intro}>¡Bienvenido de nuevo!</p>
       <div className={styles.inputGroup}>
-        <label className={styles.label} htmlFor="correo">
-          Correo Electrónico
-        </label>
-
-        <input
-          id="correo"
-          type="email"
-          placeholder="Ingresa tu correo electrónico"
-          autoComplete="email"
-          value={correo}
-          onChange={(e) => setCorreo(e.target.value)}
-        />
+        <label className={styles.label} htmlFor="correo">Correo Electrónico</label>
+        <input id="correo" type="email" placeholder="ejemplo@ejemplo.com" autoComplete="email" value={correo} onChange={(e) => setCorreo(e.target.value)} />
       </div>
-
       <div className={styles.inputGroup}>
-        <label className={styles.label} htmlFor="password">
-          Contraseña
-        </label>
-
-        <input
-          id="password"
-          type="password"
-          placeholder="Ingresa tu contraseña"
-          autoComplete="current-password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+        <label className={styles.label} htmlFor="password">Contraseña</label>
+        <input id="password" type="password" placeholder="••••••••••••" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
       </div>
-
+      <p className={styles.textoEnlace}><span>¿Olvidaste tu contraseña?</span><Link className={styles.enlace} href="/password">Recuperar Contraseña</Link></p>
       <Captcha onChange={setCaptchaToken} refreshKey={captchaKey} />
-
-      {errorMessage && <p className={styles.errorText}>{errorMessage}</p>}
-
-      <p className={styles.textoEnlace}>
-        ¿Olvidaste tu contraseña?
-        <Link className={styles.enlace} href="/password">
-          Recuperar contraseña
-        </Link>
-      </p>
-
+      {errorMessage && <p role="alert" className={styles.errorText}>{errorMessage}</p>}
       <AuthButton text="Iniciar Sesión" type="submit" disabled={cargando} />
     </AuthLayout>
   );
 };
-
 export default LoginForm;

@@ -65,6 +65,7 @@ const PasswordForm = () => {
 
   return (
     <AuthLayout title="RECUPERAR CONTRASEÑA">
+      <p className={styles.descripcion}>Ingresa el correo asociado a tu cuenta. Te enviaremos un código para continuar.</p>
       <div className={styles.inputGroup}>
         <label className={styles.label} htmlFor="correo">
           Correo Electrónico

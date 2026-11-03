@@ -54,7 +54,7 @@ const RegisterForm = () => {
   }
 
   return (
-    <AuthLayout title="CREAR CUENTA DE EMPLEADO" onSubmit={register}>
+    <AuthLayout title="CREAR CUENTA DE EMPLEADO" onSubmit={register} variant="wide">
       <div className={styles.inputGroup}>
         <label className={styles.label} htmlFor="nombre">
           Nombre
@@ -62,7 +62,7 @@ const RegisterForm = () => {
         <input
           id="nombre"
           type="text"
-          placeholder="Ingresa nombre del empleado"
+          placeholder="Ej: Ali Rodrigo"
           value={formulario.nombre}
           onChange={actualizar("nombre")}
         />
@@ -75,7 +75,7 @@ const RegisterForm = () => {
         <input
           id="apellido"
           type="text"
-          placeholder="Ingresa los apellidos del empleado"
+          placeholder="Ej: TRK"
           value={formulario.apellido}
           onChange={actualizar("apellido")}
         />
@@ -102,7 +102,7 @@ const RegisterForm = () => {
         <input
           id="correo"
           type="email"
-          placeholder="Ingresa el correo electrónico del empleado"
+          placeholder="ejemplo@ejemplo.com"
           value={formulario.correo}
           onChange={actualizar("correo")}
         />
@@ -126,7 +126,7 @@ const RegisterForm = () => {
           id="password"
           type="password"
           autoComplete="new-password"
-          placeholder="Ingresa una contraseña para el empleado"
+          placeholder="••••••••••••"
           value={formulario.password}
           onChange={actualizar("password")}
         />
@@ -136,7 +136,7 @@ const RegisterForm = () => {
 
       {successMessage && <p className={styles.successText}>{successMessage}</p>}
 
-      <AuthButton text="Registrarse" type="submit" disabled={cargando} />
+      <AuthButton text="Crear Cuenta" type="submit" disabled={cargando} />
     </AuthLayout>
   );
 };

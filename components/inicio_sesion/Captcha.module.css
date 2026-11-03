@@ -1,6 +1,20 @@
 .captcha {
   display: flex;
   justify-content: center;
-  width: 28.125rem;
+  width: 100%;
   max-width: 100%;
+  overflow: hidden;
+  min-height: 78px;
+}
+.captcha > div {
+  max-width: 100%;
+}
+@media (max-width: 370px) {
+  .captcha {
+    justify-content: flex-start;
+  }
+  .captcha > div {
+    transform: scale(0.86);
+    transform-origin: top left;
+  }
 }
