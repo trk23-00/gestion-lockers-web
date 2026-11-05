@@ -2,6 +2,14 @@
 
 La página pública conserva el diseño de Cofre Express. Las cuatro rutas de usuarios usan `paneles-compartidos/UserDashboard`, con barra lateral, cuenta actual, indicadores y tarjetas de resumen, basados en `Frames/REF_UI_USERS.png`. Se reutiliza `/Logo.svg` y la paleta naranja, crema y marrón.
 
+## Página pública
+
+`General-frames/PanelGeneral.tsx` implementa los frames aprobados de Figma `PANEL-PRINCIPAL- WEB` (`7:12`), `SERVICIOS` (`167:1199`) y `NOSOTROS` (`167:1102`) del archivo SisLckers. La cabecera y el pie son compartidos. Inicio, Servicios y Nosotros cambian el contenido de `/` mediante `#inicio`, `#servicios` y `#nosotros`, con enlaces directos e historial del navegador. La vista se adapta a escritorio, tablet y móvil.
+
+Las fotos, la ilustración y los iconos se exportaron con Figma Console MCP a `public/cofre`; `sources.json` registra su procedencia. Los textos y las tarjetas son elementos HTML editables. Se corrigieron erratas ortográficas del prototipo. Los botones de cuenta enlazan a `/login` y `/registerCliente`; “Saber más” lleva a los contactos de Nosotros y los teléfonos permiten iniciar una llamada. Los iconos sociales se muestran sin enlaces porque el diseño no proporciona las direcciones de las cuentas.
+
+Se eliminó `paneles-compartidos/PanelLayout.tsx`, cuyo único consumidor era la portada anterior, y se retiraron sus estilos sin referencias. Los estilos compartidos que todavía usan los módulos internos permanecen en `Paneles.module.css`.
+
 | Ruta | Tipo de usuario | Menús del Panel General |
 | --- | --- | --- |
 | `/paneles/administrador` | Administrador | Recepción y entregas, almacenes y lockers, traslados, usuarios, pagos, notificaciones, reportes |

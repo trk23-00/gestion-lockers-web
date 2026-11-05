@@ -1,0 +1,151 @@
+{
+  "file": "https://www.figma.com/design/kRKhxYJzGEv3tlGXJFn5jt/SisLckers",
+  "frames": {
+    "7:12": "PANEL-PRINCIPAL- WEB",
+    "167:1102": "NOSOTROS",
+    "167:1199": "SERVICIOS"
+  },
+  "exportedWith": "figma_console_mcp",
+  "assets": [
+    {
+      "file": "background.jpg",
+      "nodeId": "7:12",
+      "source": "original image fill"
+    },
+    {
+      "file": "logo.png",
+      "nodeId": "140:246",
+      "source": "node export"
+    },
+    {
+      "file": "tiktok.png",
+      "nodeId": "140:264",
+      "source": "node export"
+    },
+    {
+      "file": "facebook.png",
+      "nodeId": "140:271",
+      "source": "node export"
+    },
+    {
+      "file": "hero.svg",
+      "nodeId": "139:496",
+      "source": "node export"
+    },
+    {
+      "file": "hero-qr.png",
+      "nodeId": "139:522",
+      "source": "node export"
+    },
+    {
+      "file": "hero-lockers.png",
+      "nodeId": "139:524",
+      "source": "node export"
+    },
+    {
+      "file": "hero-send.png",
+      "nodeId": "139:525",
+      "source": "node export"
+    },
+    {
+      "file": "feature-security.png",
+      "nodeId": "150:564",
+      "source": "node export"
+    },
+    {
+      "file": "feature-alert.png",
+      "nodeId": "150:580",
+      "source": "node export"
+    },
+    {
+      "file": "feature-qr.png",
+      "nodeId": "150:581",
+      "source": "node export"
+    },
+    {
+      "file": "feature-size.png",
+      "nodeId": "150:582",
+      "source": "node export"
+    },
+    {
+      "file": "storefront.png",
+      "nodeId": "172:304",
+      "source": "node export"
+    },
+    {
+      "file": "mission.png",
+      "nodeId": "167:1182",
+      "source": "node export"
+    },
+    {
+      "file": "vision.png",
+      "nodeId": "167:1183",
+      "source": "node export"
+    },
+    {
+      "file": "contact-person.png",
+      "nodeId": "204:372",
+      "source": "node export"
+    },
+    {
+      "file": "contact.svg",
+      "nodeId": "183:1514",
+      "source": "node export"
+    },
+    {
+      "file": "phone.svg",
+      "nodeId": "183:1521",
+      "source": "node export"
+    },
+    {
+      "file": "location.svg",
+      "nodeId": "183:1534",
+      "source": "node export"
+    },
+    {
+      "file": "service-lock.svg",
+      "nodeId": "181:1337",
+      "source": "node export"
+    },
+    {
+      "file": "service-package.svg",
+      "nodeId": "181:1348",
+      "source": "node export"
+    },
+    {
+      "file": "service-qr.svg",
+      "nodeId": "181:1357",
+      "source": "node export"
+    },
+    {
+      "file": "service-size.svg",
+      "nodeId": "181:1368",
+      "source": "node export"
+    },
+    {
+      "file": "service-security.svg",
+      "nodeId": "181:1377",
+      "source": "node export"
+    },
+    {
+      "file": "service-bell.svg",
+      "nodeId": "181:1386",
+      "source": "node export"
+    },
+    {
+      "file": "sparkles.svg",
+      "nodeId": "181:1330",
+      "source": "node export"
+    },
+    {
+      "file": "arrow.svg",
+      "nodeId": "181:1353",
+      "source": "node export"
+    },
+    {
+      "file": "arrow-yellow.svg",
+      "nodeId": "181:1344",
+      "source": "node export"
+    }
+  ]
+}
