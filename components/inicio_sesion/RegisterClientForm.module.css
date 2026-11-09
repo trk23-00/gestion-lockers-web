@@ -1,42 +1,98 @@
 .inputGroup {
   display: flex;
   flex-direction: column;
-  gap: .5rem;
-  width: 28.125rem;
-  max-width: 100%;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
 }
-
 .inputGroup input,
 .inputGroup select {
-  height: 3.4375rem;
-  padding: 0 1.5625rem;
-  background-color: white;
-  border-radius: 40px;
+  width: 100%;
+  height: 64px;
+  border: 1px solid #9e9e9e;
+  background: rgba(243, 243, 243, 0.58);
+  border-radius: 12px;
+  padding: 0 clamp(16px, 2vw, 38px);
+  font-family: inherit;
+  font-size: 20px;
+  color: #151515;
   outline: none;
-  color: black;
 }
-
+.inputGroup input::placeholder {
+  color: #acacac;
+}
+.inputGroup input:focus,
+.inputGroup select:focus {
+  border-color: #e79b27;
+  box-shadow: 0 0 0 3px rgba(249, 198, 53, 0.19);
+}
 .label {
-  color: black;
-  font-size: 1rem;
+  font-size: clamp(18px, 1.45vw, 28px);
+  font-weight: 400;
+  color: rgba(0, 0, 0, 0.85);
 }
-
 .errorText {
-  color: var(--error);
+  font-size: 14px;
+  color: #b42318;
+  margin: 0;
 }
-
 .successText {
-  color: var(--success);
+  font-size: 14px;
+  color: #137547;
+  margin: 0;
 }
-
 .textoEnlace {
   display: flex;
-  gap: .625rem;
+  gap: 8px;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  font-size: 16px;
   color: black;
-  font-size: .75rem;
+  margin: 0;
 }
-
 .enlace {
-  color: blue;
+  color: #0116ff;
+  text-decoration: none;
+}
+.enlace:hover {
   text-decoration: underline;
+}
+.intro {
+  font-size: clamp(21px, 1.8vw, 36px);
+  font-weight: 700;
+  margin: 0 0 5px;
+}
+.descripcion {
+  font-size: 17px;
+  line-height: 1.45;
+  margin: 0;
+  color: #5e5e5e;
+}
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+}
+.secondary {
+  color: #7c2d12;
+  font-weight: 700;
+  text-decoration: none;
+  margin: auto;
+}
+.secondary:hover {
+  text-decoration: underline;
+}
+@media (max-width: 480px) {
+  .inputGroup input,
+  .inputGroup select {
+    height: 56px;
+    font-size: 16px;
+  }
+  .label {
+    font-size: 19px;
+  }
+  .textoEnlace {
+    font-size: 14px;
+  }
 }

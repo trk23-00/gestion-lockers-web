@@ -1,16 +1,8 @@
 import Image from "next/image";
-import styles from "@/components/inicio_sesion/Logo.module.css";
-
-const Logo = () => {
-  return (
-    <div className={styles.mainContainer}>
-      <Image src="/Logo.svg" alt="logo" width={100} height={100} />
-      <div className={styles.tituloContainer}>
-        <span>COFRE</span>
-        <span>EXPRESS</span>
-      </div>
-    </div>
-  );
-};
-
-export default Logo;
+import styles from "./Logo.module.css";
+export default function Logo() {
+  return <div className={styles.mainContainer}>
+    <Image src="/figma-auth/logo-sgap.png" alt="Logo de SGAP" width={146} height={146} className={styles.logo} priority />
+    <span className={styles.tituloContainer}>SGAP</span>
+  </div>;
+}

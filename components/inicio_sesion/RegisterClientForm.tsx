@@ -54,7 +54,7 @@ const RegisterClientForm = () => {
   }
 
   return (
-    <AuthLayout title="CREAR CUENTA" onSubmit={register}>
+    <AuthLayout title="CREAR CUENTA DE CLIENTE" onSubmit={register} variant="wide">
       <div className={styles.inputGroup}>
         <label className={styles.label} htmlFor="nombre">
           Nombre
@@ -63,7 +63,7 @@ const RegisterClientForm = () => {
           id="nombre"
           type="text"
           autoComplete="given-name"
-          placeholder="Ingresa tu nombre"
+          placeholder="Ej: Ali Rodrigo"
           value={formulario.nombre}
           onChange={actualizar("nombre")}
         />
@@ -77,7 +77,7 @@ const RegisterClientForm = () => {
           id="apellido"
           type="text"
           autoComplete="family-name"
-          placeholder="Ingresa tus apellidos"
+          placeholder="Ej: TRK"
           value={formulario.apellido}
           onChange={actualizar("apellido")}
         />
@@ -106,7 +106,7 @@ const RegisterClientForm = () => {
           type="tel"
           inputMode="tel"
           autoComplete="tel"
-          placeholder="Ingresa tu número de celular"
+          placeholder="Ej: 76784395"
           value={formulario.telefono}
           onChange={actualizar("telefono")}
         />
@@ -120,7 +120,7 @@ const RegisterClientForm = () => {
           id="correo"
           type="email"
           autoComplete="email"
-          placeholder="Ingresa tu correo electrónico"
+          placeholder="ejemplo@ejemplo.com"
           value={formulario.correo}
           onChange={actualizar("correo")}
         />
@@ -134,7 +134,7 @@ const RegisterClientForm = () => {
           id="password"
           type="password"
           autoComplete="new-password"
-          placeholder="Ingresa una contraseña"
+          placeholder="••••••••••••"
           value={formulario.password}
           onChange={actualizar("password")}
         />
@@ -149,7 +149,7 @@ const RegisterClientForm = () => {
         </Link>
       </p>
 
-      <AuthButton text="Registrarse" type="submit" disabled={cargando} />
+      <AuthButton text="Crear Cuenta" type="submit" disabled={cargando} />
     </AuthLayout>
   );
 };
