@@ -14,7 +14,7 @@ export default function AuthLayout({ title, children, onSubmit, variant = "defau
           <p>Organiza, almacena y administra cada entrega con confianza.</p>
         </div>
       </aside>
-      <section className={styles.formArea}>
+      <section className={`${styles.formArea} ${variant === "wide" ? styles.formAreaWide : ""}`}>
         <Logo />
         <form className={`${styles.authContainer} ${variant === "wide" ? styles.wide : ""}`} onSubmit={manejarEnvio} noValidate>
           <h1 className={styles.tituloAuth}>{title}</h1>

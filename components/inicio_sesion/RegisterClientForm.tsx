@@ -55,99 +55,95 @@ const RegisterClientForm = () => {
 
   return (
     <AuthLayout title="CREAR CUENTA DE CLIENTE" onSubmit={register} variant="wide">
-      <div className={styles.inputGroup}>
-        <label className={styles.label} htmlFor="nombre">
-          Nombre
-        </label>
-        <input
-          id="nombre"
-          type="text"
-          autoComplete="given-name"
-          placeholder="Ej: Ali Rodrigo"
-          value={formulario.nombre}
-          onChange={actualizar("nombre")}
-        />
-      </div>
+      <div className={styles.fieldsGrid}>
+        <div className={styles.inputGroup}>
+          <label className={styles.label} htmlFor="nombre">
+            Nombre
+          </label>
+          <input
+            id="nombre"
+            type="text"
+            autoComplete="given-name"
+            placeholder="Nombres"
+            value={formulario.nombre}
+            onChange={actualizar("nombre")}
+          />
+        </div>
 
-      <div className={styles.inputGroup}>
-        <label className={styles.label} htmlFor="apellido">
-          Apellidos
-        </label>
-        <input
-          id="apellido"
-          type="text"
-          autoComplete="family-name"
-          placeholder="Ej: TRK"
-          value={formulario.apellido}
-          onChange={actualizar("apellido")}
-        />
-      </div>
+        <div className={styles.inputGroup}>
+          <label className={styles.label} htmlFor="apellido">
+            Apellidos
+          </label>
+          <input
+            id="apellido"
+            type="text"
+            autoComplete="family-name"
+            placeholder="Apellidos"
+            value={formulario.apellido}
+            onChange={actualizar("apellido")}
+          />
+        </div>
 
-      <div className={styles.inputGroup}>
-        <label className={styles.label} htmlFor="ci">
-          Carnet de Identidad
-        </label>
-        <input
-          id="ci"
-          type="text"
-          inputMode="numeric"
-          placeholder="Ingresa tu número de CI"
-          value={formulario.ci}
-          onChange={actualizar("ci")}
-        />
-      </div>
+        <div className={styles.inputGroup}>
+          <label className={styles.label} htmlFor="ci">
+            Carnet de Identidad
+          </label>
+          <input
+            id="ci"
+            type="text"
+            inputMode="numeric"
+            placeholder="CI del cliente"
+            value={formulario.ci}
+            onChange={actualizar("ci")}
+          />
+        </div>
 
-      <div className={styles.inputGroup}>
-        <label className={styles.label} htmlFor="telefono">
-          Número de Celular
-        </label>
-        <input
-          id="telefono"
-          type="tel"
-          inputMode="tel"
-          autoComplete="tel"
-          placeholder="Ej: 76784395"
-          value={formulario.telefono}
-          onChange={actualizar("telefono")}
-        />
-      </div>
+        <div className={styles.inputGroup}>
+          <label className={styles.label} htmlFor="telefono">
+            Número de Celular
+          </label>
+          <input
+            id="telefono"
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
+            placeholder="Ej: 63262594"
+            value={formulario.telefono}
+            onChange={actualizar("telefono")}
+          />
+        </div>
 
-      <div className={styles.inputGroup}>
-        <label className={styles.label} htmlFor="correo">
-          Correo Electrónico
-        </label>
-        <input
-          id="correo"
-          type="email"
-          autoComplete="email"
-          placeholder="ejemplo@ejemplo.com"
-          value={formulario.correo}
-          onChange={actualizar("correo")}
-        />
-      </div>
+        <div className={styles.inputGroup}>
+          <label className={styles.label} htmlFor="correo">
+            Correo Electrónico
+          </label>
+          <input
+            id="correo"
+            type="email"
+            autoComplete="email"
+            placeholder="ejemplo@ejemplo.com"
+            value={formulario.correo}
+            onChange={actualizar("correo")}
+          />
+        </div>
 
-      <div className={styles.inputGroup}>
-        <label className={styles.label} htmlFor="password">
-          Contraseña
-        </label>
-        <input
-          id="password"
-          type="password"
-          autoComplete="new-password"
-          placeholder="••••••••••••"
-          value={formulario.password}
-          onChange={actualizar("password")}
-        />
+        <div className={styles.inputGroup}>
+          <label className={styles.label} htmlFor="password">
+            Contraseña
+          </label>
+          <input
+            id="password"
+            type="password"
+            autoComplete="new-password"
+            placeholder="••••••••••••"
+            value={formulario.password}
+            onChange={actualizar("password")}
+          />
+        </div>
+
       </div>
 
       {errorMessage && <p className={styles.errorText}>{errorMessage}</p>}
-
-      <p className={styles.textoEnlace}>
-        ¿Ya tienes una cuenta?
-        <Link className={styles.enlace} href="/login">
-          Inicia sesión
-        </Link>
-      </p>
 
       <AuthButton text="Crear Cuenta" type="submit" disabled={cargando} />
     </AuthLayout>
