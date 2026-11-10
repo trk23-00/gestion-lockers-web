@@ -134,24 +134,18 @@
   }
 }
 
-/* Dos columnas en escritorio; una en móvil. */
+/* Los campos siempre se muestran en una sola columna. */
 .fieldsGrid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: clamp(0.5rem, 1.1svh, 0.875rem) clamp(0.7rem, 1.4vw, 1.5rem);
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(0.35rem, 0.75svh, 0.65rem);
   width: 100%;
   min-width: 0;
 }
 
-@media (max-width: 37.5rem) {
-  .fieldsGrid {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
 @media (min-width: 55.01rem) and (max-height: 42rem) {
   .fieldsGrid {
-    gap: 0.4rem 0.75rem;
+    gap: 0.3rem;
   }
 }
 
