@@ -55,81 +55,84 @@ const RegisterForm = () => {
 
   return (
     <AuthLayout title="CREAR CUENTA DE EMPLEADO" onSubmit={register} variant="wide">
-      <div className={styles.inputGroup}>
-        <label className={styles.label} htmlFor="nombre">
-          Nombre
-        </label>
-        <input
-          id="nombre"
-          type="text"
-          placeholder="Ej: Ali Rodrigo"
-          value={formulario.nombre}
-          onChange={actualizar("nombre")}
-        />
-      </div>
+      <div className={styles.fieldsGrid}>
+        <div className={styles.inputGroup}>
+          <label className={styles.label} htmlFor="nombre">
+            Nombre
+          </label>
+          <input
+            id="nombre"
+            type="text"
+            placeholder="Nombres"
+            value={formulario.nombre}
+            onChange={actualizar("nombre")}
+          />
+        </div>
 
-      <div className={styles.inputGroup}>
-        <label className={styles.label} htmlFor="apellido">
-          Apellidos
-        </label>
-        <input
-          id="apellido"
-          type="text"
-          placeholder="Ej: TRK"
-          value={formulario.apellido}
-          onChange={actualizar("apellido")}
-        />
-      </div>
+        <div className={styles.inputGroup}>
+          <label className={styles.label} htmlFor="apellido">
+            Apellidos
+          </label>
+          <input
+            id="apellido"
+            type="text"
+            placeholder="Apellidos"
+            value={formulario.apellido}
+            onChange={actualizar("apellido")}
+          />
+        </div>
 
-      <div className={styles.inputGroup}>
-        <label className={styles.label} htmlFor="ci">
-          Carnet de Identidad
-        </label>
-        <input
-          id="ci"
-          type="text"
-          inputMode="numeric"
-          placeholder="Ingresa el número de CI del empleado"
-          value={formulario.ci}
-          onChange={actualizar("ci")}
-        />
-      </div>
+        <div className={styles.inputGroup}>
+          <label className={styles.label} htmlFor="ci">
+            Carnet de Identidad
+          </label>
+          <input
+            id="ci"
+            type="text"
+            inputMode="numeric"
+            placeholder="CI del empleado"
+            value={formulario.ci}
+            onChange={actualizar("ci")}
+          />
+        </div>
 
-      <div className={styles.inputGroup}>
-        <label className={styles.label} htmlFor="correo">
-          Correo Electrónico
-        </label>
-        <input
-          id="correo"
-          type="email"
-          placeholder="ejemplo@ejemplo.com"
-          value={formulario.correo}
-          onChange={actualizar("correo")}
-        />
-      </div>
+        <div className={styles.inputGroup}>
+          <label className={styles.label} htmlFor="correo">
+            Correo Electrónico
+          </label>
+          <input
+            id="correo"
+            type="email"
+            placeholder="ejemplo@ejemplo.com"
+            value={formulario.correo}
+            onChange={actualizar("correo")}
+          />
+        </div>
 
-      <div className={styles.inputGroup}>
-        <label className={styles.label} htmlFor="cargo">
-          Cargo
-        </label>
-        <select id="cargo" value={nivel} onChange={(e) => setNivel(Number(e.target.value))}>
-          <option value={NIVEL_ROL.RECEPCIONISTA}>Recepcionista</option>
-          <option value={NIVEL_ROL.ALMACENERO}>Almacenero</option>
-        </select>
-      </div>
+        <div className={styles.inputGroup}>
+          <label className={styles.label} htmlFor="cargo">
+            Cargo
+          </label>
+          <select id="cargo" value={nivel} onChange={(e) => setNivel(Number(e.target.value))}>
+            <option value={NIVEL_ROL.RECEPCIONISTA}>Recepcionista</option>
+            <option value={NIVEL_ROL.ALMACENERO}>Almacenero</option>
+          </select>
+        </div>
 
-      <div className={styles.inputGroup}>
-        <label className={styles.label} htmlFor="password">
-          Contraseña
-        </label>
-        <input
-          id="password"
-          type="password"
-          autoComplete="new-password"
-          placeholder="••••••••••••"
-          value={formulario.password}
-          onChange={actualizar("password")}
-        />
+        <div className={styles.inputGroup}>
+          <label className={styles.label} htmlFor="password">
+            Contraseña
+          </label>
+          <input
+            id="password"
+            type="password"
+            autoComplete="new-password"
+            placeholder="••••••••••••"
+            value={formulario.password}
+            onChange={actualizar("password")}
+          />
+        </div>
+
       </div>
 
       {errorMessage && <p className={styles.errorText}>{errorMessage}</p>}
