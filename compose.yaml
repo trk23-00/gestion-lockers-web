@@ -1,0 +1,19 @@
+services:
+  db:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-lockers}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-lockers_local}
+      POSTGRES_DB: ${POSTGRES_DB:-lockers}
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - lockers_postgres:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+volumes:
+  lockers_postgres:

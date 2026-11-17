@@ -22,7 +22,7 @@ export async function POST(req: Request) {
       return respuestaError("El cargo no es válido", 400);
     }
 
-    return await registrarUsuario(leerDatosUsuario(body), nivel);
+    return await registrarUsuario(leerDatosUsuario(body), nivel, String(body.id_sucursal || ""));
   } catch (error) {
     console.log(error);
 
