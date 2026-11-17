@@ -2,7 +2,6 @@
 
 import { useState, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import styles from "@/components/inicio_sesion/RegisterClientForm.module.css";
 import AuthButton from "./AuthButton";
 import AuthLayout from "./AuthLayout";

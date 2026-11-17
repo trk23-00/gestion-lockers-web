@@ -3,11 +3,17 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "next dev --webpack",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
-    "postinstall": "prisma skills sync || exit 0"
+    "postinstall": "prisma generate",
+    "setup": "node scripts/setup-db.mjs && node scripts/seed.mjs",
+    "db:migrate": "prisma migrate deploy",
+    "db:seed": "node scripts/seed.mjs",
+    "jobs": "node scripts/jobs.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "node scripts/test.mjs"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.0",
@@ -16,27 +22,35 @@
     "next": "16.3.8",
     "nodemailer": "^10.0.15",
     "pg": "^8.23.1",
+    "qrcode": "^1.5.4",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "react-google-recaptcha": "^3.1.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.65.1",
     "@tailwindcss/postcss": "^4",
     "@types/bcrypt": "^6.0.0",
     "@types/node": "^20",
     "@types/nodemailer": "^8.0.2",
     "@types/pg": "^8.23.1",
+    "@types/qrcode": "^1.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/react-google-recaptcha": "^2.1.9",
     "dotenv": "^18.0.5",
     "eslint": "^9",
     "eslint-config-next": "16.3.8",
+    "prettier": "^3.10.1",
     "prisma": "^7.10.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   },
   "allowScripts": {
-    "bcrypt@6.0.0": true
+    "bcrypt@6.0.0": true,
+    "@prisma/engines@7.10.0": true,
+    "prisma@7.10.0": true,
+    "unrs-resolver@1.12.2": true,
+    "esbuild@0.28.2": true
   }
 }

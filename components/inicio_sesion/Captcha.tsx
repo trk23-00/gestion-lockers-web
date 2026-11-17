@@ -9,6 +9,9 @@ type Props = {
 };
 
 const Captcha = ({ onChange, refreshKey }: Props) => {
+  if (process.env.NODE_ENV !== "production" && process.env.NEXT_PUBLIC_CAPTCHA_MODE === "local") {
+    return <label key={refreshKey} className={styles.captcha}><input type="checkbox" onChange={e => onChange(e.target.checked ? "local-dev" : null)} /> Verificación local de desarrollo</label>;
+  }
   return (
     <div className={styles.captcha}>
       <ReCAPTCHA

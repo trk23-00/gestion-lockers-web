@@ -29,7 +29,7 @@ export async function POST(req: Request) {
       include: { rol: true },
     });
 
-    if (!usuario || !(await bcrypt.compare(password, usuario.password))) {
+    if (!usuario || !usuario.activo || !(await bcrypt.compare(password, usuario.password))) {
       return respuestaError("Correo o contraseña incorrectos", 401);
     }
 

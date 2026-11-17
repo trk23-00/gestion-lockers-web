@@ -1,9 +1,2 @@
-import "dotenv/config";
-import { defineConfig, env } from "prisma/config";
-
-export default defineConfig({
-  schema: "prisma/schema.prisma",
-  datasource: {
-    url: env("DATABASE_URL"),
-  },
-});
+// Prisma 7.10 usa prisma7.config.ts. Mantener una sola configuración efectiva.
+export { default } from "./prisma7.config";

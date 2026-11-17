@@ -1,6 +1,7 @@
 const URL_VERIFICACION = "https://www.google.com/recaptcha/api/siteverify";
 
 export async function verificarCaptcha(token: string) {
+  if (process.env.NODE_ENV !== "production" && process.env.CAPTCHA_MODE === "local") return token === "local-dev";
   const secreto = process.env.RECAPTCHA_SECRET_KEY;
 
   if (!secreto) {
