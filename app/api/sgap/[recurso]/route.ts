@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { obtenerUsuarioSesion } from "@/lib/sesion";
+import { respuestaErrorPrisma } from "@/lib/errores-db";
 import {
   consultarDatos,
   modificar,
@@ -52,22 +53,7 @@ async function atender(
         { status: 400 },
       );
     if (e instanceof Prisma.PrismaClientKnownRequestError) {
-      const message =
-        e.code === "P2002"
-          ? "Ya existe un registro con ese código, CI o correo."
-          : e.code === "P2003"
-            ? "El registro tiene historial asociado. Puede desactivarlo."
-            : e.code === "P2025"
-              ? "Registro inexistente."
-              : e.code === "P2010"
-                ? String(
-                    e.meta?.message ||
-                      "La operación no cumple las reglas del proceso.",
-                  )
-                    .replace(/^ERROR:\s*/, "")
-                    .split("\n")[0]
-                : "No se pudo guardar. Revise los datos y vuelva a intentarlo.";
-      return Response.json({ message }, { status: 409 });
+      return respuestaErrorPrisma(e, req.method === "GET");
     }
     console.error("Error en SGAP", e instanceof Error ? e.name : "desconocido");
     return Response.json(

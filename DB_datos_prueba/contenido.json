@@ -1,0 +1,78 @@
+{
+  "generado": "2026-11-19T23:29:35.288Z",
+  "zona": "America/La_Paz",
+  "base": "db_ejemplo",
+  "filas": {
+    "_prisma_migrations": 3,
+    "cargo": 3,
+    "cliente": 5,
+    "configuracion": 1,
+    "detalle_documento": 28,
+    "detalle_traslado": 7,
+    "devolucion": 1,
+    "documento": 13,
+    "empleado": 5,
+    "locker": 24,
+    "movimiento": 9,
+    "notificacion": 3,
+    "notificacion_lectura": 2,
+    "pago_anticipado": 4,
+    "pago_pendiente": 24,
+    "paquete": 24,
+    "persona": 10,
+    "resumen_diario": 6,
+    "resumen_mensual": 4,
+    "rol": 4,
+    "sucursal": 2,
+    "traslado": 5,
+    "usuario": 10
+  },
+  "cuentas": 10,
+  "paquetesDeDemostracion": 24,
+  "avisosPendientes": [
+    {
+      "codigo": "DEMO-COMPARTIR-005",
+      "tipo": "recordatorio_1_dia"
+    },
+    {
+      "codigo": "DEMO-COMPARTIR-008",
+      "tipo": "recordatorio_2_dias"
+    },
+    {
+      "codigo": "DEMO-COMPARTIR-012",
+      "tipo": "recordatorio_1_dia"
+    }
+  ],
+  "estadosPaquetes": [
+    {
+      "estado": "almacenado",
+      "cantidad": "12"
+    },
+    {
+      "estado": "en_traslado",
+      "cantidad": "2"
+    },
+    {
+      "estado": "entregado",
+      "cantidad": "4"
+    },
+    {
+      "estado": "recibido",
+      "cantidad": "6"
+    }
+  ],
+  "estadosTraslados": [
+    {
+      "estado": "en_traslado",
+      "cantidad": "2"
+    },
+    {
+      "estado": "preparado",
+      "cantidad": "2"
+    },
+    {
+      "estado": "recibido",
+      "cantidad": "1"
+    }
+  ]
+}

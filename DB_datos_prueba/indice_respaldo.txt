@@ -1,0 +1,227 @@
+;
+; Archive created at 2026-11-19 23:30:29 UTC
+;     dbname: db_ejemplo
+;     TOC Entries: 216
+;     Compression: gzip
+;     Dump Version: 1.16-0
+;     Format: CUSTOM
+;     Integer: 4 bytes
+;     Offset: 8 bytes
+;     Dumped from database version: 18.3 (Debian 18.3-1.pgdg13+1)
+;     Dumped by pg_dump version: 18.3 (Debian 18.3-1.pgdg13+1)
+;
+;
+; Selected TOC Entries:
+;
+5; 2615 16557 SCHEMA - public admin
+3861; 0 0 COMMENT - SCHEMA public admin
+290; 1255 30290 FUNCTION public actualizar_resumenes() admin
+281; 1255 16761 FUNCTION public borrar_categoria_json(integer) admin
+264; 1255 16758 FUNCTION public borrar_tema_json(integer) admin
+287; 1255 30266 FUNCTION public cobrar_paquete(bigint, bigint, bigint, character varying, character varying, timestamp with time zone) admin
+295; 1255 30288 FUNCTION public confirmar_paquete_traslado(bigint, bigint, bigint) admin
+279; 1255 16759 FUNCTION public crear_categoria_json(text, text, text, integer) admin
+294; 1255 30287 FUNCTION public despachar_traslado(bigint) admin
+296; 1255 30289 FUNCTION public devolver_pago_paquete(bigint, bigint, bigint, text, character varying, character varying) admin
+280; 1255 16760 FUNCTION public editar_categoria_json(integer, text, text, text, integer) admin
+282; 1255 16762 FUNCTION public eliminar_estudiante_json(integer, integer) admin
+269; 1255 16780 FUNCTION public eliminar_publicacion_json(integer, integer) admin
+288; 1255 30267 FUNCTION public exigir_cobro_completo() admin
+284; 1255 30261 FUNCTION public generar_recargos(timestamp with time zone, bigint) admin
+278; 1255 16688 FUNCTION public obtener_dashboard_materia(integer) admin
+283; 1255 16749 FUNCTION public obtener_estadisticas() admin
+263; 1255 16750 FUNCTION public obtener_temas_json(integer) admin
+289; 1255 30270 FUNCTION public procesar_detalle_documento() admin
+291; 1255 30272 FUNCTION public recibir_paquete(bigint, character varying, text, smallint, character varying, character varying, character varying, character varying, bigint) admin
+293; 1255 30285 FUNCTION public validar_detalle_traslado() admin
+286; 1255 30264 FUNCTION public validar_devolucion() admin
+285; 1255 30262 FUNCTION public validar_movimiento() admin
+292; 1255 30283 FUNCTION public validar_notificacion() admin
+276; 1255 30259 FUNCTION public validar_ubicacion_paquete() admin
+253; 1259 24973 TABLE public _prisma_migrations admin
+234; 1259 17003 TABLE public detalle_documento admin
+242; 1259 17097 TABLE public movimiento admin
+248; 1259 17225 TABLE public notificacion admin
+236; 1259 17030 TABLE public pago_pendiente admin
+232; 1259 16955 TABLE public paquete admin
+262; 1259 30278 VIEW public avisos_por_realizar admin
+223; 1259 16846 TABLE public cargo admin
+222; 1259 16845 SEQUENCE public cargo_id_cargo_seq admin
+221; 1259 16832 TABLE public cliente admin
+258; 1259 25044 TABLE public configuracion admin
+233; 1259 17002 SEQUENCE public detalle_documento_id_detalle_seq admin
+246; 1259 17191 TABLE public detalle_traslado admin
+245; 1259 17190 SEQUENCE public detalle_traslado_id_detalle_traslado_seq admin
+240; 1259 17074 TABLE public devolucion admin
+239; 1259 17073 SEQUENCE public devolucion_id_devolucion_seq admin
+230; 1259 16922 TABLE public documento admin
+229; 1259 16921 SEQUENCE public documento_id_documento_seq admin
+226; 1259 16870 TABLE public empleado admin
+228; 1259 16901 TABLE public locker admin
+227; 1259 16900 SEQUENCE public locker_id_locker_seq admin
+225; 1259 16857 TABLE public sucursal admin
+260; 1259 30254 VIEW public lockers_disponibles admin
+241; 1259 17096 SEQUENCE public movimiento_id_movimiento_seq admin
+247; 1259 17224 SEQUENCE public notificacion_id_notificacion_seq admin
+259; 1259 25063 TABLE public notificacion_lectura admin
+238; 1259 17055 TABLE public pago_anticipado admin
+237; 1259 17054 SEQUENCE public pago_anticipado_id_pago_anticipado_seq admin
+235; 1259 17029 SEQUENCE public pago_pendiente_id_pago_pendiente_seq admin
+231; 1259 16954 SEQUENCE public paquete_id_paquete_seq admin
+220; 1259 16822 TABLE public persona admin
+219; 1259 16821 SEQUENCE public persona_id_persona_seq admin
+250; 1259 17255 TABLE public resumen_diario admin
+249; 1259 17254 SEQUENCE public resumen_diario_id_resumen_diario_seq admin
+252; 1259 17282 TABLE public resumen_mensual admin
+251; 1259 17281 SEQUENCE public resumen_mensual_id_resumen_mensual_seq admin
+255; 1259 24990 TABLE public rol admin
+254; 1259 24989 SEQUENCE public rol_id_rol_seq admin
+261; 1259 30273 VIEW public saldo_paquete admin
+224; 1259 16856 SEQUENCE public sucursal_id_sucursal_seq admin
+244; 1259 17157 TABLE public traslado admin
+243; 1259 17156 SEQUENCE public traslado_id_traslado_seq admin
+257; 1259 25004 TABLE public usuario admin
+256; 1259 25003 SEQUENCE public usuario_id_seq admin
+3848; 0 24973 TABLE DATA public _prisma_migrations admin
+3818; 0 16846 TABLE DATA public cargo admin
+3816; 0 16832 TABLE DATA public cliente admin
+3853; 0 25044 TABLE DATA public configuracion admin
+3829; 0 17003 TABLE DATA public detalle_documento admin
+3841; 0 17191 TABLE DATA public detalle_traslado admin
+3835; 0 17074 TABLE DATA public devolucion admin
+3825; 0 16922 TABLE DATA public documento admin
+3821; 0 16870 TABLE DATA public empleado admin
+3823; 0 16901 TABLE DATA public locker admin
+3837; 0 17097 TABLE DATA public movimiento admin
+3843; 0 17225 TABLE DATA public notificacion admin
+3854; 0 25063 TABLE DATA public notificacion_lectura admin
+3833; 0 17055 TABLE DATA public pago_anticipado admin
+3831; 0 17030 TABLE DATA public pago_pendiente admin
+3827; 0 16955 TABLE DATA public paquete admin
+3815; 0 16822 TABLE DATA public persona admin
+3845; 0 17255 TABLE DATA public resumen_diario admin
+3847; 0 17282 TABLE DATA public resumen_mensual admin
+3850; 0 24990 TABLE DATA public rol admin
+3820; 0 16857 TABLE DATA public sucursal admin
+3839; 0 17157 TABLE DATA public traslado admin
+3852; 0 25004 TABLE DATA public usuario admin
+3862; 0 0 SEQUENCE SET public cargo_id_cargo_seq admin
+3863; 0 0 SEQUENCE SET public detalle_documento_id_detalle_seq admin
+3864; 0 0 SEQUENCE SET public detalle_traslado_id_detalle_traslado_seq admin
+3865; 0 0 SEQUENCE SET public devolucion_id_devolucion_seq admin
+3866; 0 0 SEQUENCE SET public documento_id_documento_seq admin
+3867; 0 0 SEQUENCE SET public locker_id_locker_seq admin
+3868; 0 0 SEQUENCE SET public movimiento_id_movimiento_seq admin
+3869; 0 0 SEQUENCE SET public notificacion_id_notificacion_seq admin
+3870; 0 0 SEQUENCE SET public pago_anticipado_id_pago_anticipado_seq admin
+3871; 0 0 SEQUENCE SET public pago_pendiente_id_pago_pendiente_seq admin
+3872; 0 0 SEQUENCE SET public paquete_id_paquete_seq admin
+3873; 0 0 SEQUENCE SET public persona_id_persona_seq admin
+3874; 0 0 SEQUENCE SET public resumen_diario_id_resumen_diario_seq admin
+3875; 0 0 SEQUENCE SET public resumen_mensual_id_resumen_mensual_seq admin
+3876; 0 0 SEQUENCE SET public rol_id_rol_seq admin
+3877; 0 0 SEQUENCE SET public sucursal_id_sucursal_seq admin
+3878; 0 0 SEQUENCE SET public traslado_id_traslado_seq admin
+3879; 0 0 SEQUENCE SET public usuario_id_seq admin
+3599; 2606 24986 CONSTRAINT public _prisma_migrations _prisma_migrations_pkey admin
+3521; 2606 16855 CONSTRAINT public cargo cargo_nombre_key admin
+3523; 2606 16853 CONSTRAINT public cargo cargo_pkey admin
+3519; 2606 16839 CONSTRAINT public cliente cliente_pkey admin
+3616; 2606 25062 CONSTRAINT public configuracion configuracion_pkey admin
+3551; 2606 17016 CONSTRAINT public detalle_documento detalle_documento_id_documento_id_paquete_key admin
+3553; 2606 17018 CONSTRAINT public detalle_documento detalle_documento_id_paquete_tipo_documento_key admin
+3555; 2606 17014 CONSTRAINT public detalle_documento detalle_documento_pkey admin
+3582; 2606 17203 CONSTRAINT public detalle_traslado detalle_traslado_id_traslado_id_paquete_key admin
+3584; 2606 17201 CONSTRAINT public detalle_traslado detalle_traslado_pkey admin
+3566; 2606 17090 CONSTRAINT public devolucion devolucion_id_paquete_key admin
+3568; 2606 17088 CONSTRAINT public devolucion devolucion_pkey admin
+3537; 2606 16938 CONSTRAINT public documento documento_id_documento_tipo_key admin
+3539; 2606 16936 CONSTRAINT public documento documento_pkey admin
+3529; 2606 16882 CONSTRAINT public empleado empleado_pkey admin
+3531; 2606 16884 CONSTRAINT public empleado empleado_usuario_key admin
+3533; 2606 16915 CONSTRAINT public locker locker_id_sucursal_codigo_key admin
+3535; 2606 16913 CONSTRAINT public locker locker_pkey admin
+3572; 2606 17125 CONSTRAINT public movimiento movimiento_id_devolucion_key admin
+3574; 2606 17123 CONSTRAINT public movimiento movimiento_id_pago_anticipado_key admin
+3576; 2606 17121 CONSTRAINT public movimiento movimiento_id_pago_pendiente_key admin
+3578; 2606 17119 CONSTRAINT public movimiento movimiento_pkey admin
+3587; 2606 17243 CONSTRAINT public notificacion notificacion_id_pago_pendiente_tipo_key admin
+3618; 2606 25073 CONSTRAINT public notificacion_lectura notificacion_lectura_pkey admin
+3589; 2606 17241 CONSTRAINT public notificacion notificacion_pkey admin
+3562; 2606 17067 CONSTRAINT public pago_anticipado pago_anticipado_id_paquete_key admin
+3564; 2606 17065 CONSTRAINT public pago_anticipado pago_anticipado_pkey admin
+3558; 2606 17048 CONSTRAINT public pago_pendiente pago_pendiente_id_paquete_concepto_numero_periodo_key admin
+3560; 2606 17046 CONSTRAINT public pago_pendiente pago_pendiente_pkey admin
+3545; 2606 16989 CONSTRAINT public paquete paquete_codigo_key admin
+3547; 2606 16991 CONSTRAINT public paquete paquete_id_locker_key admin
+3549; 2606 16987 CONSTRAINT public paquete paquete_pkey admin
+3515; 2606 16831 CONSTRAINT public persona persona_ci_key admin
+3517; 2606 16829 CONSTRAINT public persona persona_pkey admin
+3591; 2606 17275 CONSTRAINT public resumen_diario resumen_diario_id_sucursal_fecha_key admin
+3593; 2606 17273 CONSTRAINT public resumen_diario resumen_diario_pkey admin
+3595; 2606 17303 CONSTRAINT public resumen_mensual resumen_mensual_id_sucursal_periodo_key admin
+3597; 2606 17301 CONSTRAINT public resumen_mensual resumen_mensual_pkey admin
+3601; 2606 25000 CONSTRAINT public rol rol_nivel_key admin
+3603; 2606 25002 CONSTRAINT public rol rol_nombre_rol_key admin
+3605; 2606 24998 CONSTRAINT public rol rol_pkey admin
+3525; 2606 16869 CONSTRAINT public sucursal sucursal_nombre_key admin
+3527; 2606 16867 CONSTRAINT public sucursal sucursal_pkey admin
+3580; 2606 17174 CONSTRAINT public traslado traslado_pkey admin
+3608; 2606 25022 CONSTRAINT public usuario usuario_ci_key admin
+3610; 2606 25024 CONSTRAINT public usuario usuario_correo_key admin
+3612; 2606 25026 CONSTRAINT public usuario usuario_id_persona_key admin
+3614; 2606 25020 CONSTRAINT public usuario usuario_pkey admin
+3556; 1259 17310 INDEX public idx_detalle_documento_documento admin
+3540; 1259 17309 INDEX public idx_documento_fecha admin
+3569; 1259 17313 INDEX public idx_movimiento_caja admin
+3570; 1259 17314 INDEX public idx_movimiento_paquete admin
+3541; 1259 25043 INDEX public idx_paquete_destinatario admin
+3542; 1259 17312 INDEX public idx_paquete_sucursal admin
+3543; 1259 17311 INDEX public idx_paquete_vencimiento admin
+3585; 1259 17315 INDEX public idx_traslado_paquete admin
+3606; 1259 25037 INDEX public idx_usuario_rol admin
+3659; 2620 30268 TRIGGER public movimiento tg_cobro_completo admin
+3657; 2620 30271 TRIGGER public detalle_documento tg_detalle_documento admin
+3662; 2620 30286 TRIGGER public detalle_traslado tg_detalle_traslado admin
+3658; 2620 30265 TRIGGER public devolucion tg_devolucion admin
+3660; 2620 30263 TRIGGER public movimiento tg_movimiento admin
+3663; 2620 30284 TRIGGER public notificacion tg_notificacion admin
+3661; 2620 30291 TRIGGER public movimiento tg_resumenes admin
+3656; 2620 30260 TRIGGER public paquete tg_ubicacion_paquete admin
+3619; 2606 16840 FK CONSTRAINT public cliente cliente_id_cliente_fkey admin
+3630; 2606 17024 FK CONSTRAINT public detalle_documento detalle_documento_id_documento_tipo_documento_fkey admin
+3631; 2606 17019 FK CONSTRAINT public detalle_documento detalle_documento_id_paquete_fkey admin
+3644; 2606 17214 FK CONSTRAINT public detalle_traslado detalle_traslado_id_empleado_receptor_fkey admin
+3645; 2606 17219 FK CONSTRAINT public detalle_traslado detalle_traslado_id_locker_destino_fkey admin
+3646; 2606 17209 FK CONSTRAINT public detalle_traslado detalle_traslado_id_paquete_fkey admin
+3647; 2606 17204 FK CONSTRAINT public detalle_traslado detalle_traslado_id_traslado_fkey admin
+3634; 2606 17091 FK CONSTRAINT public devolucion devolucion_id_paquete_fkey admin
+3624; 2606 16949 FK CONSTRAINT public documento documento_id_cliente_fkey admin
+3625; 2606 16944 FK CONSTRAINT public documento documento_id_empleado_fkey admin
+3626; 2606 16939 FK CONSTRAINT public documento documento_id_sucursal_fkey admin
+3620; 2606 16890 FK CONSTRAINT public empleado empleado_id_cargo_fkey admin
+3621; 2606 16885 FK CONSTRAINT public empleado empleado_id_empleado_fkey admin
+3622; 2606 16895 FK CONSTRAINT public empleado empleado_id_sucursal_fkey admin
+3623; 2606 16916 FK CONSTRAINT public locker locker_id_sucursal_fkey admin
+3635; 2606 17151 FK CONSTRAINT public movimiento movimiento_id_devolucion_fkey admin
+3636; 2606 17136 FK CONSTRAINT public movimiento movimiento_id_empleado_fkey admin
+3637; 2606 17146 FK CONSTRAINT public movimiento movimiento_id_pago_anticipado_fkey admin
+3638; 2606 17141 FK CONSTRAINT public movimiento movimiento_id_pago_pendiente_fkey admin
+3639; 2606 17126 FK CONSTRAINT public movimiento movimiento_id_paquete_fkey admin
+3640; 2606 17131 FK CONSTRAINT public movimiento movimiento_id_sucursal_fkey admin
+3648; 2606 17249 FK CONSTRAINT public notificacion notificacion_id_empleado_fkey admin
+3649; 2606 17244 FK CONSTRAINT public notificacion notificacion_id_pago_pendiente_fkey admin
+3654; 2606 25079 FK CONSTRAINT public notificacion_lectura notificacion_lectura_id_notificacion_fkey admin
+3655; 2606 25074 FK CONSTRAINT public notificacion_lectura notificacion_lectura_id_usuario_fkey admin
+3633; 2606 17068 FK CONSTRAINT public pago_anticipado pago_anticipado_id_paquete_fkey admin
+3632; 2606 17049 FK CONSTRAINT public pago_pendiente pago_pendiente_id_paquete_fkey admin
+3627; 2606 25038 FK CONSTRAINT public paquete paquete_id_destinatario_fkey admin
+3628; 2606 16997 FK CONSTRAINT public paquete paquete_id_locker_fkey admin
+3629; 2606 16992 FK CONSTRAINT public paquete paquete_id_sucursal_actual_fkey admin
+3650; 2606 17276 FK CONSTRAINT public resumen_diario resumen_diario_id_sucursal_fkey admin
+3651; 2606 17304 FK CONSTRAINT public resumen_mensual resumen_mensual_id_sucursal_fkey admin
+3641; 2606 17185 FK CONSTRAINT public traslado traslado_id_empleado_fkey admin
+3642; 2606 17180 FK CONSTRAINT public traslado traslado_id_sucursal_destino_fkey admin
+3643; 2606 17175 FK CONSTRAINT public traslado traslado_id_sucursal_origen_fkey admin
+3652; 2606 25032 FK CONSTRAINT public usuario usuario_id_persona_fkey admin
+3653; 2606 25027 FK CONSTRAINT public usuario usuario_rol_fkey admin

@@ -1,5 +1,6 @@
 import { test, expect, type APIRequestContext } from "@playwright/test";
 import pg from "pg";
+import { readFileSync } from "node:fs";
 import { navigation } from "../components/paneles-compartidos/sgap-navigation";
 test("CRUD por perfiles y ciclo completo de los paquetes", async ({
   playwright,
@@ -611,6 +612,31 @@ test("CRUD por perfiles y ciclo completo de los paquetes", async ({
       "DELETE",
     );
     expect(data.diarios.length).toBeGreaterThan(0);
+    // Reproduce el incidente real únicamente en la DB desechable de las pruebas.
+    const database = new URL(process.env.DATABASE_URL!).pathname.slice(1);
+    if (!/^lockers_test_\d+$/.test(database))
+      throw new Error("La prueba de restauración requiere la DB temporal.");
+    const repair = readFileSync(
+      "prisma/migrations/202611190001_restaurar_reglas_operacion/migration.sql",
+      "utf8",
+    );
+    const antes = (await db.query("SELECT count(*) AS n FROM movimiento"))
+      .rows[0].n;
+    try {
+      await db.query("DROP FUNCTION generar_recargos(timestamptz, bigint)");
+      const error = await admin.get("/api/sgap/datos");
+      expect(error.status()).toBe(503);
+      expect((await error.json()).code).toBe("DB_SCHEMA_INCOMPLETE");
+    } finally {
+      await db.query(repair);
+    }
+    expect((await admin.get("/api/sgap/datos")).status()).toBe(200);
+    // La misma reparación también es válida si las reglas ya existen.
+    await db.query(repair);
+    expect((await admin.get("/api/sgap/datos")).status()).toBe(200);
+    expect(
+      (await db.query("SELECT count(*) AS n FROM movimiento")).rows[0].n,
+    ).toBe(antes);
   } finally {
     for (const ctx of contexts) await ctx.dispose();
     await db.end();

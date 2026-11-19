@@ -1,0 +1,113 @@
+{
+  "verificado": "2026-11-19T23:33:55.924Z",
+  "restauracionCompleta": true,
+  "tablas": 23,
+  "datosIdenticosPorHash": true,
+  "funciones": 23,
+  "procedimientos": 0,
+  "vistas": 3,
+  "triggers": 8,
+  "restricciones": 249,
+  "secuencias": 18,
+  "cuentasConClaveVerificada": 10,
+  "ejecutarGenerarRecargos": true,
+  "nuevosRecargos": 0,
+  "sha256": "f0978a556cf5c660d986c20ad2fa703cf1d57336bb26382d70e216dc2e177763",
+  "filas": {
+    "_prisma_migrations": 3,
+    "cargo": 3,
+    "cliente": 5,
+    "configuracion": 1,
+    "detalle_documento": 28,
+    "detalle_traslado": 7,
+    "devolucion": 1,
+    "documento": 13,
+    "empleado": 5,
+    "locker": 24,
+    "movimiento": 9,
+    "notificacion": 3,
+    "notificacion_lectura": 2,
+    "pago_anticipado": 4,
+    "pago_pendiente": 24,
+    "paquete": 24,
+    "persona": 10,
+    "resumen_diario": 6,
+    "resumen_mensual": 4,
+    "rol": 4,
+    "sucursal": 2,
+    "traslado": 5,
+    "usuario": 10
+  },
+  "accesosVerificadosDesdeLaAplicacion": [
+    {
+      "correo": "admin@lockers.local",
+      "perfil": "Administrador",
+      "inicioSesion": true,
+      "cargaPanel": true,
+      "paquetesVisibles": 24
+    },
+    {
+      "correo": "recepcion@lockers.local",
+      "perfil": "Recepcionista",
+      "inicioSesion": true,
+      "cargaPanel": true,
+      "paquetesVisibles": 16
+    },
+    {
+      "correo": "almacen@lockers.local",
+      "perfil": "Almacenero",
+      "inicioSesion": true,
+      "cargaPanel": true,
+      "paquetesVisibles": 16
+    },
+    {
+      "correo": "cliente@lockers.local",
+      "perfil": "Cliente",
+      "inicioSesion": true,
+      "cargaPanel": true,
+      "paquetesVisibles": 6
+    },
+    {
+      "correo": "comerciante.maria@lockers.local",
+      "perfil": "Cliente",
+      "inicioSesion": true,
+      "cargaPanel": true,
+      "paquetesVisibles": 16
+    },
+    {
+      "correo": "comerciante.jorge@lockers.local",
+      "perfil": "Cliente",
+      "inicioSesion": true,
+      "cargaPanel": true,
+      "paquetesVisibles": 8
+    },
+    {
+      "correo": "compradora.ana@lockers.local",
+      "perfil": "Cliente",
+      "inicioSesion": true,
+      "cargaPanel": true,
+      "paquetesVisibles": 10
+    },
+    {
+      "correo": "comprador.luis@lockers.local",
+      "perfil": "Cliente",
+      "inicioSesion": true,
+      "cargaPanel": true,
+      "paquetesVisibles": 7
+    },
+    {
+      "correo": "recepcion.norte@lockers.local",
+      "perfil": "Recepcionista",
+      "inicioSesion": true,
+      "cargaPanel": true,
+      "paquetesVisibles": 6
+    },
+    {
+      "correo": "almacen.norte@lockers.local",
+      "perfil": "Almacenero",
+      "inicioSesion": true,
+      "cargaPanel": true,
+      "paquetesVisibles": 6
+    }
+  ]
+}
