@@ -1,3 +1,5 @@
+import { Prisma } from "@prisma/client";
+import { respuestaErrorPrisma } from "@/lib/errores-db";
 import { respuestaError } from "@/lib/api";
 import { registrarUsuario } from "@/lib/usuarios";
 import { leerDatosUsuario, NIVEL_ROL } from "@/lib/validaciones";
@@ -5,10 +7,17 @@ import { leerDatosUsuario, NIVEL_ROL } from "@/lib/validaciones";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
+      return respuestaError("Formulario inválido", 400);
+    }
 
     return await registrarUsuario(leerDatosUsuario(body), NIVEL_ROL.CLIENTE);
   } catch (error) {
-    console.log(error);
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      return respuestaErrorPrisma(error, false);
+    }
+    if (error instanceof SyntaxError) return respuestaError("Formulario inválido", 400);
+    console.error("Error al registrar la cuenta");
 
     return respuestaError("Error interno del servidor", 500);
   }

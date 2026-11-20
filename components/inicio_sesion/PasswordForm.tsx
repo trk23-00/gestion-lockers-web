@@ -8,10 +8,10 @@ import AuthButton from "./AuthButton";
 import AuthLayout from "./AuthLayout";
 import { postJson } from "@/lib/api";
 
-const PasswordForm = () => {
+const PasswordForm = ({ correoCuenta, volver }: { correoCuenta?: string; volver: string }) => {
   const router = useRouter();
 
-  const [correo, setCorreo] = useState("");
+  const [correo, setCorreo] = useState(correoCuenta ?? "");
   const [codigo, setCodigo] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
@@ -64,8 +64,12 @@ const PasswordForm = () => {
   }
 
   return (
-    <AuthLayout title="RECUPERAR CONTRASEÑA">
-      <p className={styles.descripcion}>Ingresa el correo asociado a tu cuenta. Te enviaremos un código para continuar.</p>
+    <AuthLayout title={correoCuenta ? "CAMBIAR CONTRASEÑA" : "RECUPERAR CONTRASEÑA"}>
+      <p className={styles.descripcion}>
+        {correoCuenta
+          ? "Solicita un código al correo de tu cuenta para confirmar tu identidad."
+          : "Ingresa el correo asociado a tu cuenta. Te enviaremos un código para continuar."}
+      </p>
       <div className={styles.inputGroup}>
         <label className={styles.label} htmlFor="correo">
           Correo Electrónico
@@ -76,6 +80,7 @@ const PasswordForm = () => {
           autoComplete="email"
           placeholder="Ingresa tu correo electrónico"
           value={correo}
+          readOnly={Boolean(correoCuenta)}
           onChange={(e) => setCorreo(e.target.value)}
         />
       </div>
@@ -103,7 +108,7 @@ const PasswordForm = () => {
 
       <AuthButton text="Verificar Código" onClick={verificarCodigo} disabled={cargando} />
 
-      <Link className={styles.enlace} href="/login">
+      <Link className={styles.enlace} href={volver}>
         Regresar
       </Link>
     </AuthLayout>

@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState, type ChangeEvent } from "react";
 import styles from "@/components/inicio_sesion/RegisterForm.module.css";
 import AuthButton from "./AuthButton";
@@ -12,14 +14,18 @@ const FORMULARIO_INICIAL = {
   apellido: "",
   ci: "",
   correo: "",
+  telefono: "",
   password: "",
 };
 
-const RegisterForm = () => {
+const destino = "/paneles/administrador?seccion=usuarios&vista=Personal";
+
+const RegisterForm = ({ sucursales }: { sucursales: { id: string; nombre: string }[] }) => {
+  const router = useRouter();
+  const [sucursal, setSucursal] = useState(sucursales[0]?.id ?? "");
   const [formulario, setFormulario] = useState(FORMULARIO_INICIAL);
   const [nivel, setNivel] = useState<number>(NIVEL_ROL.RECEPCIONISTA);
   const [errorMessage, setErrorMessage] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
   const [cargando, setCargando] = useState(false);
 
   function actualizar(campo: keyof typeof FORMULARIO_INICIAL) {
@@ -28,8 +34,6 @@ const RegisterForm = () => {
   }
 
   async function register() {
-    setSuccessMessage("");
-
     const error = validarUsuario(formulario, false);
 
     if (error) {
@@ -37,10 +41,15 @@ const RegisterForm = () => {
       return;
     }
 
+    if (!sucursal) {
+      setErrorMessage("Seleccione la sucursal del empleado");
+      return;
+    }
+
     setErrorMessage("");
     setCargando(true);
 
-    const respuesta = await postJson("/api/auth/register-empleado", { ...formulario, nivel });
+    const respuesta = await postJson("/api/auth/register-empleado", { ...formulario, nivel, id_sucursal: sucursal });
 
     setCargando(false);
 
@@ -49,8 +58,7 @@ const RegisterForm = () => {
       return;
     }
 
-    setSuccessMessage("Cuenta registrada correctamente");
-    setFormulario(FORMULARIO_INICIAL);
+    router.push(destino);
   }
 
   return (
@@ -114,9 +122,22 @@ const RegisterForm = () => {
             Cargo
           </label>
           <select id="cargo" value={nivel} onChange={(e) => setNivel(Number(e.target.value))}>
+            <option value={NIVEL_ROL.ADMINISTRADOR}>Administrador</option>
             <option value={NIVEL_ROL.RECEPCIONISTA}>Recepcionista</option>
             <option value={NIVEL_ROL.ALMACENERO}>Almacenero</option>
           </select>
+        </div>
+
+        <div className={styles.inputGroup}>
+          <label className={styles.label} htmlFor="sucursal">Sucursal</label>
+          <select id="sucursal" value={sucursal} onChange={(e) => setSucursal(e.target.value)} required>
+            {sucursales.map(({ id, nombre }) => <option key={id} value={id}>{nombre}</option>)}
+          </select>
+        </div>
+
+        <div className={styles.inputGroup}>
+          <label className={styles.label} htmlFor="telefono">Teléfono (opcional)</label>
+          <input id="telefono" type="tel" autoComplete="tel" value={formulario.telefono} onChange={actualizar("telefono")} />
         </div>
 
         <div className={styles.inputGroup}>
@@ -137,9 +158,10 @@ const RegisterForm = () => {
 
       {errorMessage && <p className={styles.errorText}>{errorMessage}</p>}
 
-      {successMessage && <p className={styles.successText}>{successMessage}</p>}
+      {!sucursales.length && <p className={styles.errorText}>No hay sucursales activas.</p>}
 
-      <AuthButton text="Crear Cuenta" type="submit" disabled={cargando} />
+      <AuthButton text="Crear Cuenta" type="submit" disabled={cargando || !sucursal} />
+      <Link href={destino}>Regresar</Link>
     </AuthLayout>
   );
 };

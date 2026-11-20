@@ -46,11 +46,6 @@
 .navigation a { color: inherit; font-size: calc(21 * var(--u)); font-weight: 700; min-height: 44px; display: inline-flex; align-items: center; position: relative; }
 .navigation a::after { content: ""; position: absolute; bottom: 3px; left: 0; right: 0; height: 2px; background: transparent; }
 .navigation a[aria-current="page"]::after, .navigation a:hover::after, .navigation a:focus-visible::after { background: currentColor; }
-.authLinks { display: flex; gap: calc(25 * var(--u)); margin-left: auto; }
-.authLinks a { width: calc(231 * var(--u)); min-height: max(44px, calc(61 * var(--u))); border-radius: calc(10 * var(--u)); border: 2px solid #9f3511; display: grid; place-items: center; font-size: calc(19 * var(--u)); }
-.login { color: #87300f; }
-.register { background: #9f3511; color: #fff; font-weight: 700; }
-.authLinks a:hover { background: #7d2d12; color: #fff; border-color: #7d2d12; }
 .skipLink { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 .skipLink:focus { width: auto; height: auto; clip-path: none; top: 12px; left: 12px; padding: 12px 18px; background: white; color: var(--ink); z-index: 30; }
 
@@ -155,8 +150,6 @@ a.contactCard:hover { background: #fff5c6; }
   .brand > span { font-size: 24px; }
   .navigation { order: 3; width: 100%; margin: 0; justify-content: center; gap: 56px; }
   .navigation a { font-size: 16px; }
-  .authLinks { gap: 12px; }
-  .authLinks a { width: auto; padding: 10px 20px; font-size: 14px; border-radius: 8px; }
   .hero { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); padding: 50px 40px 0; gap: 24px; align-items: center; }
   .heroCopy { padding: 0; }
   .heroCopy h1 { font-size: clamp(32px, 4.2vw, 42px); line-height: 1.5; }
@@ -224,8 +217,6 @@ a.contactCard:hover { background: #fff5c6; }
   .brand { gap: 12px; }
   .brand > img { width: 50px; height: 50px; }
   .brand > span { font-size: 20px; }
-  .authLinks { gap: 8px; }
-  .authLinks a { padding: 8px 12px; font-size: 12px; }
   .hero { grid-template-columns: 1fr; padding: 40px 24px 0; gap: 32px; }
   .heroCopy h1 { font-size: clamp(34px, 8vw, 48px); line-height: 1.45; }
   .heroCopy p { max-width: 440px; margin-top: 20px; }
@@ -272,8 +263,6 @@ a.contactCard:hover { background: #fff5c6; }
   .headerInner { gap: 12px; padding: 12px 16px; }
   .brand > img { width: 46px; height: 46px; }
   .brand > span { font-size: 18px; }
-  .authLinks { margin: 0; width: 100%; order: 3; }
-  .authLinks a { flex: 1; font-size: 14px; }
   .navigation { order: 2; gap: 36px; }
   .hero, .services, .about { padding-left: 20px; padding-right: 20px; }
   .features { padding: 20px; }
@@ -284,4 +273,10 @@ a.contactCard:hover { background: #fff5c6; }
 @media (prefers-reduced-motion: reduce) {
   .site { scroll-behavior: auto; }
   .panelTransition { animation: none; }
+}
+.sgapCard { grid-column: 1 / -1; flex-wrap: wrap; align-items: center; }
+.sgapEntry { display: inline-grid; place-items: center; min-height: 44px; padding: 0 24px; border-radius: 8px; background: #9f3511; color: #fff; font-weight: 700; }
+.sgapEntry:hover { background: #7d2d12; }
+@media (max-width: 520px) {
+  .sgapEntry { width: 100%; }
 }

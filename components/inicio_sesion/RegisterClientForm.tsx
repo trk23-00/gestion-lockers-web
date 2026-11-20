@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import styles from "@/components/inicio_sesion/RegisterClientForm.module.css";
@@ -17,7 +18,7 @@ const FORMULARIO_INICIAL = {
   password: "",
 };
 
-const RegisterClientForm = () => {
+const RegisterClientForm = ({ volver }: { volver: string }) => {
   const router = useRouter();
 
   const [formulario, setFormulario] = useState(FORMULARIO_INICIAL);
@@ -49,7 +50,7 @@ const RegisterClientForm = () => {
       return;
     }
 
-    router.push("/login");
+    router.push(volver);
   }
 
   return (
@@ -145,6 +146,7 @@ const RegisterClientForm = () => {
       {errorMessage && <p className={styles.errorText}>{errorMessage}</p>}
 
       <AuthButton text="Crear Cuenta" type="submit" disabled={cargando} />
+      <Link href={volver}>Regresar</Link>
     </AuthLayout>
   );
 };

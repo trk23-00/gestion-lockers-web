@@ -1,5 +1,4 @@
 import Image from "next/image";
-import Link from "next/link";
 import type { PublicSection } from "./PanelGeneral";
 import styles from "./PublicSite.module.css";
 
@@ -22,10 +21,6 @@ export default function PublicHeader({ section }: { section: PublicSection }) {
             <a key={id} href={`#${id}`} aria-current={section === id ? "page" : undefined}>{label}</a>
           ))}
         </nav>
-        <div className={styles.authLinks}>
-          <Link href="/login" className={styles.login}>Iniciar sesión</Link>
-          <Link href="/registerCliente" className={styles.register}>Registrarse</Link>
-        </div>
       </div>
     </header>
   );
