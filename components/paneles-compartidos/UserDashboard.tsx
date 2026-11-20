@@ -1,9 +1,9 @@
 "use client";
 import Image from "next/image";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { panelPorNivel, rutaPanel, type PanelRole } from "@/lib/paneles";
-import { type DashboardData } from "./sgap-types";
+import { type PanelRole } from "@/lib/paneles";
+import { usePanelData } from "./usePanelData";
 import { navigation } from "./sgap-navigation";
 import Workspace from "./Workspace";
 import styles from "./UserDashboard.module.css";
@@ -11,10 +11,8 @@ import styles from "./UserDashboard.module.css";
 export default function UserDashboard({ role }: { role: PanelRole }) {
   const router = useRouter();
   const modules = navigation(role);
-  const [data, setData] = useState<DashboardData | null>(null);
-  const [error, setError] = useState("");
+  const { data, error, loading, refresh, setError } = usePanelData(role);
   const [notice, setNotice] = useState("");
-  const [loading, setLoading] = useState(true);
   const [section, setSection] = useState("general"),
     [tab, setTab] = useState(""),
     [branch, setBranch] = useState(""),
@@ -22,36 +20,6 @@ export default function UserDashboard({ role }: { role: PanelRole }) {
   const current = modules.find((m) => m.id === section);
   const title =
     section === "cuenta" ? "Mi cuenta" : current?.label || "Panel general";
-  const refresh = useCallback(async () => {
-    const res = await fetch("/api/sgap/datos", { cache: "no-store" });
-    const result = await res.json();
-    if (res.status === 401) {
-      router.replace("/login");
-      throw new Error(result.message);
-    }
-    if (!res.ok)
-      throw new Error(result.message || "No se pudo cargar la información.");
-    if (panelPorNivel[result.usuario.nivel] !== role) {
-      router.replace(rutaPanel(result.usuario.nivel));
-      return;
-    }
-    setData(result);
-    setError("");
-  }, [role, router, setData, setError]);
-  useEffect(() => {
-    let cancelled = false;
-    void Promise.resolve()
-      .then(refresh)
-      .catch((e) => {
-        if (!cancelled) setError(e.message);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [refresh]);
   useEffect(() => {
     const sync = () => {
       const p = new URLSearchParams(window.location.search);
@@ -104,7 +72,7 @@ export default function UserDashboard({ role }: { role: PanelRole }) {
     setNotice(result.message);
     // El fallo de lectura no debe invitar a repetir una operación confirmada.
     try {
-      await refresh();
+      await refresh({ force: true });
     } catch {
       setError(
         "El cambio se guardó. No se pudo actualizar la vista; pulse Actualizar.",
@@ -292,10 +260,7 @@ export default function UserDashboard({ role }: { role: PanelRole }) {
               {error}{" "}
               <button
                 onClick={() => {
-                  setLoading(true);
-                  refresh()
-                    .catch((e) => setError(e.message))
-                    .finally(() => setLoading(false));
+                  void refresh({ force: true }).catch(() => {});
                 }}
               >
                 Actualizar

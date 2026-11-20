@@ -114,6 +114,7 @@ export type Alert = {
   tipo: string;
 };
 export type Movement = {
+  paquete?: { codigo: string };
   id_movimiento: string;
   id_paquete: string;
   id_sucursal: string;

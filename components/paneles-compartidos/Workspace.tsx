@@ -597,6 +597,12 @@ export default function Workspace({
   const [form, setForm] = useState<FormState | null>(null);
   const [detail, setDetail] = useState<Package | Document | null>(null);
   const [qr, setQr] = useState("");
+  const currentDetail = detail
+    ? "codigo" in detail
+      ? data.paquetes.find((p) => p.id_paquete === detail.id_paquete) || null
+      : data.documentos.find((d) => d.id_documento === detail.id_documento) ||
+        null
+    : null;
   const nivel = data.usuario.nivel,
     admin = nivel === 1,
     staffReception = nivel === 1 || nivel === 2,
@@ -622,7 +628,9 @@ export default function Workspace({
   const branchName = (id: string) =>
     data.sucursales.find((b) => b.id_sucursal === id)?.nombre || "—";
   const code = (id: string) =>
-    data.paquetes.find((p) => p.id_paquete === id)?.codigo || `Paquete ${id}`;
+    data.paquetes.find((p) => p.id_paquete === id)?.codigo ||
+    data.movimientos.find((m) => m.id_paquete === id)?.paquete?.codigo ||
+    `Paquete ${id}`;
   const clientName = (p: Package) =>
     data.clientes.find(
       (c) =>
@@ -737,7 +745,7 @@ export default function Workspace({
       refund ? "Devolución monetaria total" : "Registrar cobro completo",
       refund ? "devoluciones" : "cobros",
       [
-        select("id_sucursal", "Caja / sucursal", allBranches),
+        select("id_sucursal", "Caja / sucursal", branchOptions),
         select(
           "pagador",
           refund ? "Receptor del dinero" : "Quién paga",
@@ -1336,10 +1344,9 @@ export default function Workspace({
                   {tab === "Entregas" ? (
                     <button
                       className={styles.textButton}
-                      disabled={debt(p) > 0}
-                      onClick={() => delivery(p)}
+                      onClick={() => (debt(p) > 0 ? payment(p) : delivery(p))}
                     >
-                      {debt(p) > 0 ? "Saldo pendiente" : "Entregar"}
+                      {debt(p) > 0 ? "Cobrar para entregar" : "Entregar"}
                     </button>
                   ) : (
                     ["recibido", "almacenado"].includes(p.estado) && (
@@ -1615,55 +1622,57 @@ export default function Workspace({
         <Card
           title="Tarifas de almacenamiento"
           action={
-            <button
-              className={styles.primary}
-              onClick={() =>
-                open(
-                  "Editar tarifas",
-                  "tarifas",
-                  [
+            admin && (
+              <button
+                className={styles.primary}
+                onClick={() =>
+                  open(
+                    "Editar tarifas",
+                    "tarifas",
+                    [
+                      {
+                        ...text(
+                          "importe_inicial",
+                          "Importe inicial (Bs)",
+                          true,
+                          "number",
+                        ),
+                        min: "0.01",
+                        step: "0.01",
+                      },
+                      {
+                        ...text(
+                          "recargo_semanal",
+                          "Recargo por semana iniciada (Bs)",
+                          true,
+                          "number",
+                        ),
+                        min: "0.01",
+                        step: "0.01",
+                      },
+                      {
+                        ...text(
+                          "dias_iniciales",
+                          "Días iniciales",
+                          true,
+                          "number",
+                        ),
+                        min: "1",
+                        max: "365",
+                        step: "1",
+                      },
+                    ],
+                    data.configuracion,
+                    "PATCH",
                     {
-                      ...text(
-                        "importe_inicial",
-                        "Importe inicial (Bs)",
-                        true,
-                        "number",
-                      ),
-                      min: "0.01",
-                      step: "0.01",
+                      help: "Los nuevos valores se aplican únicamente a futuras recepciones. Cada paquete conserva sus tarifas originales.",
                     },
-                    {
-                      ...text(
-                        "recargo_semanal",
-                        "Recargo por semana iniciada (Bs)",
-                        true,
-                        "number",
-                      ),
-                      min: "0.01",
-                      step: "0.01",
-                    },
-                    {
-                      ...text(
-                        "dias_iniciales",
-                        "Días iniciales",
-                        true,
-                        "number",
-                      ),
-                      min: "1",
-                      max: "365",
-                      step: "1",
-                    },
-                  ],
-                  data.configuracion,
-                  "PATCH",
-                  {
-                    help: "Los nuevos valores se aplican únicamente a futuras recepciones. Cada paquete conserva sus tarifas originales.",
-                  },
-                )
-              }
-            >
-              Editar tarifas
-            </button>
+                  )
+                }
+              >
+                Editar tarifas
+              </button>
+            )
           }
         >
           <dl className={styles.detailGrid}>
@@ -1696,7 +1705,7 @@ export default function Workspace({
                 (tab !== "Cobros" || m.tipo === "entrada"),
             )}
             rowKey={(m) => m.id_movimiento}
-            exportName={admin ? "movimientos" : undefined}
+            exportName={staffReception ? "movimientos" : undefined}
             columns={[
               { title: "Movimiento", value: (m) => `MV-${m.id_movimiento}` },
               { title: "Paquete", value: (m) => code(m.id_paquete) },
@@ -1725,7 +1734,7 @@ export default function Workspace({
                   p.pago_pendiente.some((x) => x.movimiento)
                 : debt(p) > 0,
             ),
-            admin
+            staffReception
               ? (p) =>
                   tab === "Devoluciones" ? (
                     p.devolucion ? (
@@ -1766,7 +1775,7 @@ export default function Workspace({
                 cargo: "Recepcionista",
                 alcance: "Su sucursal",
                 tareas:
-                  "Registrar recepción y entrega; crear y editar fichas de clientes; consultar lockers y traslados",
+                  "Registrar recepción, cobros completos, devoluciones y entregas; consultar la caja de su sucursal; crear y editar fichas de clientes; consultar lockers y traslados",
               },
               {
                 cargo: "Almacenero",
@@ -2259,7 +2268,7 @@ export default function Workspace({
       )}
       {detail && (
         <DetailDialog
-          detail={detail}
+          detail={currentDetail}
           qr={qr}
           data={data}
           close={() => {
@@ -2278,7 +2287,7 @@ function DetailDialog({
   data,
   close,
 }: {
-  detail: Package | Document;
+  detail: Package | Document | null;
   qr: string;
   data: DashboardData;
   close: () => void;
@@ -2289,6 +2298,28 @@ function DetailDialog({
     dialog?.showModal();
     return () => dialog?.close();
   }, []);
+  if (!detail)
+    return (
+      <dialog
+        ref={ref}
+        className={styles.dialog}
+        onCancel={close}
+        aria-labelledby="detail-title"
+      >
+        <div className={styles.dialogHeader}>
+          <h2 id="detail-title">Registro no disponible</h2>
+        </div>
+        <p>
+          El registro fue eliminado o ya no está disponible en su ámbito de
+          acceso.
+        </p>
+        <div className={styles.dialogFooter}>
+          <button className={styles.primary} onClick={close}>
+            Cerrar
+          </button>
+        </div>
+      </dialog>
+    );
   const isPackage = "codigo" in detail;
   return (
     <dialog
