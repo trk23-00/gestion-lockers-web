@@ -116,7 +116,14 @@ export function navigation(role: PanelRole): Section[] {
           "reportes",
         ]
       : role === "empleado"
-        ? ["general", "recepcion", "almacenes", "traslados", "clientes"]
+        ? [
+            "general",
+            "recepcion",
+            "almacenes",
+            "traslados",
+            "pagos",
+            "clientes",
+          ]
         : role === "almacenes"
           ? ["general", "almacenes", "traslados", "clientes"]
           : ["general", "paquetes", "pagos", "notificaciones"];

@@ -7,6 +7,13 @@ import { obtenerUsuarioSesion } from "@/lib/sesion";
 type Sesion = NonNullable<Awaited<ReturnType<typeof obtenerUsuarioSesion>>>;
 type Body = Record<string, unknown>;
 type Tx = Prisma.TransactionClient;
+async function fechaOperacion(tx: Tx) {
+  // Las reglas monetarias comparan estas fechas con el reloj de PostgreSQL.
+  const [reloj] = await tx.$queryRaw<
+    { fecha: Date }[]
+  >`SELECT CURRENT_TIMESTAMP AS fecha`;
+  return reloj.fecha;
+}
 export class ErrorOperacion extends Error {
   constructor(
     message: string,
@@ -237,9 +244,14 @@ export async function consultarDatos(s: Sesion) {
             cliente: { include: { persona: { select: personaSelect } } },
           },
         }),
-    admin || client
+    admin || client || s.rol.nivel === 2
       ? prisma.movimiento.findMany({
-          where: client ? { paquete: pkgWhere } : {},
+          where: admin
+            ? {}
+            : client
+              ? { paquete: pkgWhere }
+              : { id_sucursal: branch },
+          include: { paquete: { select: { codigo: true } } },
           orderBy: { fecha: "desc" },
         })
       : [],
@@ -636,7 +648,7 @@ export async function modificar(
         const config = await tx.configuracion.findUniqueOrThrow({
           where: { id: 1 },
         });
-        const fecha = new Date();
+        const fecha = await fechaOperacion(tx);
         const doc = await tx.documento.create({
           data: {
             tipo: "recepcion",
@@ -792,7 +804,7 @@ export async function modificar(
         permitir(s, 1, 2);
         exigir(method === "POST", "Método inválido.", 405);
         const branch = sucursal(s, b.id_sucursal);
-        const fecha = new Date();
+        const fecha = await fechaOperacion(tx);
         exigir(
           Array.isArray(b.paquetes) &&
             b.paquetes.length > 0 &&
@@ -917,7 +929,7 @@ export async function modificar(
         });
       }
       if (recurso === "cobros" || recurso === "devoluciones") {
-        permitir(s, 1);
+        permitir(s, 1, 2);
         exigir(
           method === "POST",
           "Los movimientos conservan su historial.",
@@ -950,14 +962,9 @@ export async function modificar(
       if (recurso === "notificaciones") {
         if (method === "POST") {
           permitir(s, 1);
-          // Prisma calcula algunos defaults de fecha en el cliente; el registro
-          // del aviso debe usar el reloj de la transacción de PostgreSQL.
-          const [reloj] = await tx.$queryRaw<
-            { fecha: Date }[]
-          >`SELECT CURRENT_TIMESTAMP AS fecha`;
           return tx.notificacion.create({
             data: {
-              realizado_en: reloj.fecha,
+              realizado_en: await fechaOperacion(tx),
               id_pago_pendiente: id(b.id_pago_pendiente),
               tipo: elegir(b.tipo, [
                 "recordatorio_1_dia",
