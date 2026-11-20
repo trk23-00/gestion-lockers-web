@@ -275,7 +275,7 @@ test("el recepcionista cobra, entrega y devuelve únicamente en su sucursal", as
         id_detalle: detail.id_detalle_traslado,
       },
     });
-    expect(receive.status()).toBe(200);
+    expect(receive.status(), await receive.text()).toBe(200);
     data = await (await recep.get("/api/sgap/datos")).json();
     expect(
       data.paquetes.some(

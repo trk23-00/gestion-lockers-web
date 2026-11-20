@@ -487,25 +487,33 @@ test("CRUD por perfiles y ciclo completo de los paquetes", async ({
           .getByRole("button", { name: "Usuarios", exact: true })
           .click();
         await page
-          .getByRole("button", { name: "Nuevo cliente", exact: true })
+          .getByRole("link", { name: "Nuevo cliente", exact: true })
           .click();
-        await page.getByLabel("Nombre completo").fill("Cliente Interfaz");
-        await page.getByLabel("CI", { exact: true }).fill("84444444");
+        await page.getByLabel("Nombre", { exact: true }).fill("Cliente");
+        await page.getByLabel("Apellidos", { exact: true }).fill("Interfaz");
+        await page.getByLabel("Carnet de Identidad").fill("84444444");
+        await page.getByLabel("Número de Celular").fill("74444444");
         await page
-          .getByRole("button", { name: "Guardar", exact: true })
+          .getByLabel("Correo Electrónico")
+          .fill("interfaz@lockers.local");
+        await page
+          .getByLabel("Contraseña", { exact: true })
+          .fill("LockersDemo2026!");
+        const registrationResponse = page.waitForResponse(
+          (response) =>
+            response.url().endsWith("/api/auth/register") &&
+            response.request().method() === "POST",
+        );
+        await page
+          .getByRole("button", { name: "Crear Cuenta", exact: true })
           .click();
-        await expect(page.getByRole("dialog")).toHaveCount(0);
+        const registered = await registrationResponse;
+        expect(registered.status(), await registered.text()).toBe(201);
+        await expect(page).toHaveURL(
+          /\/paneles\/administrador\?seccion=usuarios/,
+        );
         const row = page.getByRole("row").filter({ hasText: "84444444" });
         await expect(row).toContainText("Cliente Interfaz");
-        await row.getByRole("button", { name: "Crear acceso" }).click();
-        await page
-          .getByLabel("Correo de acceso")
-          .fill("interfaz@lockers.local");
-        await page.getByLabel("Contraseña inicial").fill("LockersDemo2026!");
-        await page
-          .getByRole("button", { name: "Guardar", exact: true })
-          .click();
-        await expect(page.getByRole("dialog")).toHaveCount(0);
         await login("interfaz@lockers.local");
       }
       if (role === "empleado") {

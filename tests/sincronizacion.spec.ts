@@ -48,21 +48,30 @@ test("dos usuarios ven el CRUD sin recargar y conservan sus formularios", async 
     const initialNavigations = navigations;
     const search = reader.getByRole("textbox", { name: "Buscar", exact: true });
     await search.fill(marker);
+    const draft = await admin.post("/api/sgap/clientes", {
+      data: { nombre: `${marker} borrador`, ci: "86666666" },
+    });
+    expect(draft.status()).toBe(200);
+    const draftData = await (await admin.get("/api/sgap/datos")).json();
+    createdClients.push(
+      draftData.clientes.find(
+        (c: { persona: { ci: string } }) => c.persona.ci === "86666666",
+      ).id_cliente,
+    );
     await reader
-      .getByRole("button", { name: "Nuevo cliente", exact: true })
+      .getByRole("row")
+      .filter({ hasText: "86666666" })
+      .getByRole("button", { name: "Editar", exact: true })
       .click();
     await reader
       .getByLabel("Nombre completo")
       .fill("Borrador que debe conservarse");
     await reader.getByLabel("CI", { exact: true }).fill("86666666");
 
-    await writer
-      .getByRole("button", { name: "Nuevo cliente", exact: true })
-      .click();
-    await writer.getByLabel("Nombre completo").fill(`${marker} creado`);
-    await writer.getByLabel("CI", { exact: true }).fill("87770001");
-    await writer.getByRole("button", { name: "Guardar", exact: true }).click();
-    await expect(writer.getByRole("dialog")).toHaveCount(0);
+    const creationInBackground = await admin.post("/api/sgap/clientes", {
+      data: { nombre: `${marker} creado`, ci: "87770001" },
+    });
+    expect(creationInBackground.status()).toBe(200);
     const snapshot = await (await admin.get("/api/sgap/datos")).json();
     const record = snapshot.clientes.find(
       (c: { persona: { ci: string } }) => c.persona.ci === "87770001",
@@ -98,7 +107,7 @@ test("dos usuarios ven el CRUD sin recargar y conservan sus formularios", async 
     await writer
       .getByRole("row")
       .filter({ hasText: "87770001" })
-      .getByRole("button", { name: "Eliminar", exact: true })
+      .getByRole("button", { name: "Eliminar ficha", exact: true })
       .click();
     await writer
       .getByRole("button", { name: "Eliminar registro", exact: true })
