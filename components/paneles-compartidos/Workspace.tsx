@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import DailyCollections from "./DailyCollections";
 import {
   useEffect,
   useRef,
@@ -779,9 +780,7 @@ export default function Workspace({
         text("correo", "Correo", false, "email"),
         text("telefono", "Teléfono"),
         text("observaciones", "Observaciones", false, "textarea"),
-        ...(admin
-          ? [text("activo", "Cliente activo", false, "checkbox")]
-          : []),
+        ...(admin ? [text("activo", "Cliente activo", false, "checkbox")] : []),
       ],
       { id: c.id_cliente, ...c.persona, observaciones: c.observaciones },
       "PATCH",
@@ -842,12 +841,7 @@ export default function Workspace({
         ]),
         select("id_sucursal", "Sucursal", allBranches),
         {
-          ...text(
-            "password",
-            "Nueva contraseña (opcional)",
-            false,
-            "password",
-          ),
+          ...text("password", "Nueva contraseña (opcional)", false, "password"),
           help: "Al menos 8 caracteres.",
         },
         text("activo", "Cuenta activa", false, "checkbox"),
@@ -1949,14 +1943,25 @@ export default function Workspace({
                                   "Eliminar cuenta de cliente",
                                   "clientes",
                                   [],
-                                  { id: c.id_cliente, accion: "eliminar_cuenta" },
+                                  {
+                                    id: c.id_cliente,
+                                    accion: "eliminar_cuenta",
+                                  },
                                   "DELETE",
-                                  { help: "Se eliminará el acceso del cliente. Su ficha y sus paquetes se conservarán." },
+                                  {
+                                    help: "Se eliminará el acceso del cliente. Su ficha y sus paquetes se conservarán.",
+                                  },
                                 )
-                              : remove("Eliminar ficha de cliente", "clientes", { id: c.id_cliente })
+                              : remove(
+                                  "Eliminar ficha de cliente",
+                                  "clientes",
+                                  { id: c.id_cliente },
+                                )
                           }
                         >
-                          {c.persona.usuario ? "Eliminar cuenta" : "Eliminar ficha"}
+                          {c.persona.usuario
+                            ? "Eliminar cuenta"
+                            : "Eliminar ficha"}
                         </button>
                       )}
                     </>
@@ -2250,6 +2255,24 @@ export default function Workspace({
     );
   return (
     <>
+      {section === "pagos" && (
+        <Card title="Cobros de hoy">
+          <DailyCollections
+            movements={data.movimientos.filter(
+              (m) => !branch || m.id_sucursal === branch,
+            )}
+            scope={
+              client
+                ? "Cobros de mis paquetes"
+                : branch
+                  ? `Sucursal ${branchName(branch)}`
+                  : admin
+                    ? "Todas las sucursales"
+                    : "Mi sucursal"
+            }
+          />
+        </Card>
+      )}
       {content}
       {form && (
         <FormDialog

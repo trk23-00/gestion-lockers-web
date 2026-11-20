@@ -478,6 +478,10 @@ test("CRUD por perfiles y ciclo completo de los paquetes", async ({
             exact: true,
           }),
         ).toBeVisible();
+        if (item.id === "pagos")
+          await expect(
+            page.getByRole("heading", { name: "Cobros de hoy", exact: true }),
+          ).toBeVisible();
         for (const view of item.tabs)
           await page.getByRole("tab", { name: view, exact: true }).click();
       }

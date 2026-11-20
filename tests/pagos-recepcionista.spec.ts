@@ -307,6 +307,30 @@ test("el recepcionista cobra, entrega y devuelve únicamente en su sucursal", as
           String(m.id_sucursal) === central,
       ),
     ).toBeTruthy();
+    const daily = page.locator("section").filter({
+      has: page.getByRole("heading", { name: "Cobros de hoy", exact: true }),
+    });
+    const dailyTotal = (
+      await db.query(
+        `SELECT COALESCE(SUM(monto), 0) AS total FROM movimiento
+       WHERE tipo='entrada' AND id_sucursal=$1
+         AND (fecha AT TIME ZONE 'America/La_Paz')::date =
+             (CURRENT_TIMESTAMP AT TIME ZONE 'America/La_Paz')::date`,
+        [central],
+      )
+    ).rows[0].total;
+    await expect(daily.locator("dl")).toContainText(
+      `Bs ${Number(dailyTotal).toLocaleString("es-BO", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`,
+    );
+    await daily.getByText("Ver cobros de hoy", { exact: true }).click();
+    const todayTable = daily.getByRole("table", {
+      name: "Cobros realizados hoy",
+    });
+    await expect(todayTable).toContainText(due.codigo);
+    await expect(todayTable).not.toContainText(other.codigo);
   } finally {
     await Promise.all(contexts.map((c) => c.close()));
     await Promise.all(apis.map((a) => a.dispose()));
