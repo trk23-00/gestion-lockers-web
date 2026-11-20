@@ -26,10 +26,15 @@ export async function POST(req: Request) {
 
     const usuario = await prisma.usuario.findUnique({
       where: { correo },
-      include: { rol: true },
+      include: { rol: true, persona: { include: { empleado: true } } },
     });
 
-    if (!usuario || !usuario.activo || !(await bcrypt.compare(password, usuario.password))) {
+    if (
+      !usuario?.activo ||
+      !usuario.persona.activo ||
+      (usuario.rol.nivel !== 4 && !usuario.persona.empleado?.activo) ||
+      !(await bcrypt.compare(password, usuario.password))
+    ) {
       return respuestaError("Correo o contraseña incorrectos", 401);
     }
 

@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import {
   useEffect,
   useRef,
@@ -760,9 +761,9 @@ export default function Workspace({
       },
     );
   }
-  function customer(c?: Client) {
+  function customer(c: Client) {
     open(
-      c ? "Editar cliente" : "Nuevo cliente",
+      "Editar cliente",
       "clientes",
       [
         text("nombre", "Nombre completo", true),
@@ -770,14 +771,12 @@ export default function Workspace({
         text("correo", "Correo", false, "email"),
         text("telefono", "Teléfono"),
         text("observaciones", "Observaciones", false, "textarea"),
-        ...(admin && c
+        ...(admin
           ? [text("activo", "Cliente activo", false, "checkbox")]
           : []),
       ],
-      c
-        ? { id: c.id_cliente, ...c.persona, observaciones: c.observaciones }
-        : {},
-      c ? "PATCH" : "POST",
+      { id: c.id_cliente, ...c.persona, observaciones: c.observaciones },
+      "PATCH",
       {
         help: "La ficha no crea una cuenta. El administrador puede habilitarla con Crear acceso. Si ya tiene cuenta, su nombre se modifica desde Mi cuenta y se conservan su CI y correo.",
       },
@@ -818,9 +817,9 @@ export default function Workspace({
       b ? "PATCH" : "POST",
     );
   }
-  function staffForm(s?: Staff) {
+  function staffForm(s: Staff) {
     open(
-      s ? "Editar empleado" : "Nuevo empleado",
+      "Editar empleado",
       "personal",
       [
         text("nombre", "Nombre", true),
@@ -837,23 +836,21 @@ export default function Workspace({
         {
           ...text(
             "password",
-            s ? "Nueva contraseña (opcional)" : "Contraseña",
-            !s,
+            "Nueva contraseña (opcional)",
+            false,
             "password",
           ),
           help: "Al menos 8 caracteres.",
         },
-        ...(s ? [text("activo", "Cuenta activa", false, "checkbox")] : []),
+        text("activo", "Cuenta activa", false, "checkbox"),
       ],
-      s
-        ? {
-            ...s,
-            id: s.id,
-            nivel: String(s.rol.nivel),
-            id_sucursal: s.persona.empleado.id_sucursal,
-          }
-        : { nivel: "2", id_sucursal: branchId },
-      s ? "PATCH" : "POST",
+      {
+        ...s,
+        id: s.id,
+        nivel: String(s.rol.nivel),
+        id_sucursal: s.persona.empleado.id_sucursal,
+      },
+      "PATCH",
     );
   }
   function transfer(t?: Transfer) {
@@ -1799,9 +1796,9 @@ export default function Workspace({
         <Card
           title="Personal"
           action={
-            <button className={styles.primary} onClick={() => staffForm()}>
+            <Link href="/registerEmpleado" className={styles.primary}>
               Nuevo empleado
-            </button>
+            </Link>
           }
         >
           <Table
@@ -1835,10 +1832,7 @@ export default function Workspace({
                   disabled={s.id === data.usuario.id}
                   onClick={() =>
                     remove("Eliminar empleado sin historial", "personal", {
-                      ...s,
                       id: String(s.id),
-                      nivel: String(s.rol.nivel),
-                      id_sucursal: s.persona.empleado.id_sucursal,
                     })
                   }
                 >
@@ -1861,9 +1855,9 @@ export default function Workspace({
           title="Directorio de clientes"
           action={
             staffReception && (
-              <button className={styles.primary} onClick={() => customer()}>
+              <Link href="/registerCliente" className={styles.primary}>
                 Nuevo cliente
-              </button>
+              </Link>
             )
           }
         >
@@ -1941,12 +1935,19 @@ export default function Workspace({
                         <button
                           className={styles.textButton}
                           onClick={() =>
-                            remove("Eliminar ficha de cliente", "clientes", {
-                              id: c.id_cliente,
-                            })
+                            c.persona.usuario
+                              ? open(
+                                  "Eliminar cuenta de cliente",
+                                  "clientes",
+                                  [],
+                                  { id: c.id_cliente, accion: "eliminar_cuenta" },
+                                  "DELETE",
+                                  { help: "Se eliminará el acceso del cliente. Su ficha y sus paquetes se conservarán." },
+                                )
+                              : remove("Eliminar ficha de cliente", "clientes", { id: c.id_cliente })
                           }
                         >
-                          Eliminar
+                          {c.persona.usuario ? "Eliminar cuenta" : "Eliminar ficha"}
                         </button>
                       )}
                     </>
@@ -2173,40 +2174,33 @@ export default function Workspace({
       <Card
         title="Mi cuenta"
         action={
-          <button
-            className={styles.primary}
-            onClick={() =>
-              open(
-                "Actualizar mi cuenta",
-                "cuenta",
-                [
-                  text("nombre", "Nombre", true),
-                  text("apellido", "Apellidos", true),
-                  text("telefono", "Teléfono"),
-                  text(
-                    "password_actual",
-                    "Contraseña actual (para cambiarla)",
-                    false,
-                    "password",
-                  ),
-                  text(
-                    "password",
-                    "Nueva contraseña (opcional)",
-                    false,
-                    "password",
-                  ),
-                ],
-                {
-                  nombre: data.usuario.nombre,
-                  apellido: data.usuario.apellido,
-                  telefono: data.usuario.telefono || "",
-                },
-                "PATCH",
-              )
-            }
-          >
-            Editar mi cuenta
-          </button>
+          <div className={styles.rowActions}>
+            <button
+              className={styles.primary}
+              onClick={() =>
+                open(
+                  "Actualizar mi cuenta",
+                  "cuenta",
+                  [
+                    text("nombre", "Nombre", true),
+                    text("apellido", "Apellidos", true),
+                    text("telefono", "Teléfono"),
+                  ],
+                  {
+                    nombre: data.usuario.nombre,
+                    apellido: data.usuario.apellido,
+                    telefono: data.usuario.telefono || "",
+                  },
+                  "PATCH",
+                )
+              }
+            >
+              Editar mi cuenta
+            </button>
+            <Link href="/password" className={styles.primary}>
+              Cambiar contraseña
+            </Link>
+          </div>
         }
       >
         <dl className={styles.detailGrid}>

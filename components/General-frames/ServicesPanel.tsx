@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import styles from "./PublicSite.module.css";
 
 const services = [
@@ -33,6 +34,16 @@ export default function ServicesPanel() {
             </div>
           </article>
         ))}
+        <article className={`${styles.serviceCard} ${styles.sgapCard}`}>
+          <span className={`${styles.serviceIcon} ${styles.orange}`}>
+            <Image src="/login/logo-sgap.png" alt="" width={39} height={39} />
+          </span>
+          <div className={styles.serviceContent}>
+            <div className={styles.serviceTitle}><h2>SGAP</h2></div>
+            <p>Consulta el estado de tus envíos y accede al Sistema de Gestión de Almacenamiento de Paquetes de Cofre Express.</p>
+          </div>
+          <Link href="/login" className={styles.sgapEntry}>Ingresar</Link>
+        </article>
       </div>
     </section>
   );
