@@ -18,7 +18,7 @@ const FORMULARIO_INICIAL = {
   password: "",
 };
 
-const destino = "/paneles/administrador?seccion=usuarios&vista=Personal";
+const destino = "/paneles/administrador?seccion=usuarios&vista=Usuarios%20registrados";
 
 const RegisterForm = ({ sucursales }: { sucursales: { id: string; nombre: string }[] }) => {
   const router = useRouter();
@@ -62,7 +62,7 @@ const RegisterForm = ({ sucursales }: { sucursales: { id: string; nombre: string
   }
 
   return (
-    <AuthLayout title="CREAR CUENTA DE EMPLEADO" onSubmit={register} variant="wide">
+    <AuthLayout title="CREAR CUENTA DE EMPLEADO" onSubmit={register} variant="wide" centered showWelcome={false}>
       <div className={styles.fieldsGrid}>
         <div className={styles.inputGroup}>
           <label className={styles.label} htmlFor="nombre">

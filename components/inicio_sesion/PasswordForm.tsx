@@ -64,7 +64,7 @@ const PasswordForm = ({ correoCuenta, volver }: { correoCuenta?: string; volver:
   }
 
   return (
-    <AuthLayout title={correoCuenta ? "CAMBIAR CONTRASEÑA" : "RECUPERAR CONTRASEÑA"}>
+    <AuthLayout title={correoCuenta ? "CAMBIAR CONTRASEÑA" : "RECUPERAR CONTRASEÑA"} centered showWelcome={false}>
       <p className={styles.descripcion}>
         {correoCuenta
           ? "Solicita un código al correo de tu cuenta para confirmar tu identidad."

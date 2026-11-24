@@ -8,17 +8,25 @@ const sections: { id: PublicSection; label: string }[] = [
   { id: "nosotros", label: "Nosotros" },
 ];
 
-export default function PublicHeader({ section }: { section: PublicSection }) {
+export default function PublicHeader({
+  section,
+  basePath = "",
+}: {
+  section: PublicSection;
+  basePath?: string;
+}) {
+  const sectionHref = (id: PublicSection) => `${basePath}#${id}`;
+
   return (
     <header className={styles.header}>
       <div className={styles.headerInner}>
-        <a href="#inicio" className={styles.brand} aria-label="Cofre Express, inicio">
+        <a href={sectionHref("inicio")} className={styles.brand} aria-label="Cofre Express, inicio">
           <Image src="/cofre/logo.png" width={137} height={137} alt="" preload />
           <span>COFRE<br />EXPRESS</span>
         </a>
         <nav className={styles.navigation} aria-label="Navegación principal">
           {sections.map(({ id, label }) => (
-            <a key={id} href={`#${id}`} aria-current={section === id ? "page" : undefined}>{label}</a>
+            <a key={id} href={sectionHref(id)} aria-current={section === id ? "page" : undefined}>{label}</a>
           ))}
         </nav>
       </div>

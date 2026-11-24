@@ -1,4 +1,5 @@
 import { type PanelRole } from "@/lib/paneles";
+
 type Section = {
   id: string;
   label: string;
@@ -7,6 +8,7 @@ type Section = {
   tabs: string[];
   description: string;
 };
+
 const sections: Record<string, Section> = {
   general: {
     id: "general",
@@ -18,12 +20,21 @@ const sections: Record<string, Section> = {
   },
   recepcion: {
     id: "recepcion",
-    label: "Recepción y entregas",
+    label: "Recepción",
     icon: "imgSvg.svg",
     group: "OPERACIÓN",
-    tabs: ["Recepción", "Entregas", "Documentos"],
+    tabs: ["Nueva recepción", "Documentos registrados", "Corregir recepción"],
     description:
-      "Registra paquetes y entrega cada envío con su saldo completo.",
+      "Registra paquetes, consulta sus documentos y corrige los datos permitidos.",
+  },
+  entregas: {
+    id: "entregas",
+    label: "Entrega",
+    icon: "imgSvg3.svg",
+    group: "OPERACIÓN",
+    tabs: [],
+    description:
+      "Verifica los paquetes y registra su entrega al destinatario.",
   },
   almacenes: {
     id: "almacenes",
@@ -62,7 +73,7 @@ const sections: Record<string, Section> = {
     label: "Usuarios",
     icon: "imgSvg5.svg",
     group: "GESTIÓN",
-    tabs: ["Clientes", "Personal", "Cargos y accesos"],
+    tabs: ["Nuevo usuario", "Usuarios registrados", "Actualizar usuario", "Cargos y accesos"],
     description: "Administra clientes, personal y accesos al sistema.",
   },
   clientes: {
@@ -102,12 +113,14 @@ const sections: Record<string, Section> = {
       "Sigue tus paquetes y consulta su ubicación y sus movimientos.",
   },
 };
+
 export function navigation(role: PanelRole): Section[] {
   const ids =
     role === "administrador"
       ? [
           "general",
           "recepcion",
+          "entregas",
           "almacenes",
           "traslados",
           "pagos",
@@ -116,19 +129,14 @@ export function navigation(role: PanelRole): Section[] {
           "reportes",
         ]
       : role === "empleado"
-        ? [
-            "general",
-            "recepcion",
-            "almacenes",
-            "traslados",
-            "pagos",
-            "clientes",
-          ]
+        ? ["general", "recepcion", "entregas", "almacenes", "traslados", "clientes"]
         : role === "almacenes"
           ? ["general", "almacenes", "traslados", "clientes"]
           : ["general", "paquetes", "pagos", "notificaciones"];
+
   return ids.map((id) => {
     const item = { ...sections[id], tabs: [...sections[id].tabs] };
+
     if (role === "empleado" && id === "almacenes")
       item.tabs = ["Disponibilidad", "Ubicación de paquetes", "Por ubicar"];
     if (role === "empleado" && id === "traslados")

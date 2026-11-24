@@ -52,7 +52,7 @@ const RecuperarContraseña = () => {
   }
 
   return (
-    <AuthLayout title="NUEVA CONTRASEÑA" onSubmit={recuperarContraseña}>
+    <AuthLayout title="NUEVA CONTRASEÑA" onSubmit={recuperarContraseña} centered showWelcome={false}>
       <div className={styles.inputGroup}>
         <label className={styles.label} htmlFor="password">
           Contraseña Nueva

@@ -7,13 +7,6 @@ import { obtenerUsuarioSesion } from "@/lib/sesion";
 type Sesion = NonNullable<Awaited<ReturnType<typeof obtenerUsuarioSesion>>>;
 type Body = Record<string, unknown>;
 type Tx = Prisma.TransactionClient;
-async function fechaOperacion(tx: Tx) {
-  // Las reglas monetarias comparan estas fechas con el reloj de PostgreSQL.
-  const [reloj] = await tx.$queryRaw<
-    { fecha: Date }[]
-  >`SELECT CURRENT_TIMESTAMP AS fecha`;
-  return reloj.fecha;
-}
 export class ErrorOperacion extends Error {
   constructor(
     message: string,
@@ -244,14 +237,9 @@ export async function consultarDatos(s: Sesion) {
             cliente: { include: { persona: { select: personaSelect } } },
           },
         }),
-    admin || client || s.rol.nivel === 2
+    admin || client
       ? prisma.movimiento.findMany({
-          where: admin
-            ? {}
-            : client
-              ? { paquete: pkgWhere }
-              : { id_sucursal: branch },
-          include: { paquete: { select: { codigo: true } } },
+          where: client ? { paquete: pkgWhere } : {},
           orderBy: { fecha: "desc" },
         })
       : [],
@@ -321,12 +309,12 @@ export async function modificar(
   b: Body,
 ) {
   const metodos: Record<string, string[]> = {
-    clientes: ["POST", "PATCH", "DELETE"],
-    personal: ["POST", "PATCH", "DELETE"],
+    clientes: ["POST", "PATCH"],
+    personal: ["POST", "PATCH"],
     sucursales: ["POST", "PATCH", "DELETE"],
     lockers: ["POST", "PATCH", "DELETE"],
     recepciones: ["POST"],
-    paquetes: ["PATCH", "DELETE"],
+    paquetes: ["PATCH"],
     ubicaciones: ["PATCH"],
     entregas: ["POST"],
     traslados: ["POST", "PATCH", "DELETE"],
@@ -409,15 +397,6 @@ export async function modificar(
             data: { nombre: `${nombre} ${apellido}`, correo },
           });
           return { id: c.id_cliente };
-        }
-        if (method === "DELETE") {
-          permitir(s, 1);
-          exigir(
-            !c.persona.usuario,
-            "Desactive la cuenta del cliente desde su ficha; las cuentas conservan su historial.",
-          );
-          await tx.cliente.delete({ where: { id_cliente: c.id_cliente } });
-          return tx.persona.delete({ where: { id_persona: c.id_cliente } });
         }
         const data = {
           nombre: texto(b.nombre, 150, true),
@@ -527,16 +506,6 @@ export async function modificar(
           account.id !== s.id || (b.activo !== false && level === 1),
           "No puede quitarse su propio acceso de administrador.",
         );
-        if (method === "DELETE") {
-          exigir(account.id !== s.id, "No puede eliminar su propia cuenta.");
-          await tx.usuario.delete({ where: { id: account.id } });
-          await tx.empleado.delete({
-            where: { id_empleado: account.id_persona },
-          });
-          return tx.persona.delete({
-            where: { id_persona: account.id_persona },
-          });
-        }
         const activo = b.activo !== false;
         const password = texto(b.password, 200);
         exigir(
@@ -648,7 +617,7 @@ export async function modificar(
         const config = await tx.configuracion.findUniqueOrThrow({
           where: { id: 1 },
         });
-        const fecha = await fechaOperacion(tx);
+        const fecha = new Date();
         const doc = await tx.documento.create({
           data: {
             tipo: "recepcion",
@@ -738,41 +707,6 @@ export async function modificar(
           ["recibido", "almacenado"].includes(p.estado),
           "El paquete ya fue entregado o está en traslado.",
         );
-        if (method === "DELETE") {
-          permitir(s, 1);
-          exigir(
-            (await tx.movimiento.count({
-              where: { id_paquete: p.id_paquete },
-            })) === 0 &&
-              (await tx.detalle_traslado.count({
-                where: { id_paquete: p.id_paquete },
-              })) === 0 &&
-              (await tx.notificacion.count({
-                where: { pago_pendiente: { id_paquete: p.id_paquete } },
-              })) === 0,
-            "El paquete tiene historial; no se puede eliminar.",
-          );
-          await tx.pago_pendiente.deleteMany({
-            where: { id_paquete: p.id_paquete },
-          });
-          const details = await tx.detalle_documento.findMany({
-            where: { id_paquete: p.id_paquete },
-          });
-          await tx.detalle_documento.deleteMany({
-            where: { id_paquete: p.id_paquete },
-          });
-          await tx.paquete.delete({ where: { id_paquete: p.id_paquete } });
-          for (const d of details)
-            if (
-              !(await tx.detalle_documento.count({
-                where: { id_documento: d.id_documento },
-              }))
-            )
-              await tx.documento.delete({
-                where: { id_documento: d.id_documento },
-              });
-          return { id: p.id_paquete };
-        }
         if (recurso === "ubicaciones") {
           const l = opcional(b.id_locker);
           exigir(p.id_sucursal_actual, "El paquete no está en una sucursal.");
@@ -804,7 +738,7 @@ export async function modificar(
         permitir(s, 1, 2);
         exigir(method === "POST", "Método inválido.", 405);
         const branch = sucursal(s, b.id_sucursal);
-        const fecha = await fechaOperacion(tx);
+        const fecha = new Date();
         exigir(
           Array.isArray(b.paquetes) &&
             b.paquetes.length > 0 &&
@@ -929,7 +863,7 @@ export async function modificar(
         });
       }
       if (recurso === "cobros" || recurso === "devoluciones") {
-        permitir(s, 1, 2);
+        permitir(s, 1);
         exigir(
           method === "POST",
           "Los movimientos conservan su historial.",
@@ -962,9 +896,14 @@ export async function modificar(
       if (recurso === "notificaciones") {
         if (method === "POST") {
           permitir(s, 1);
+          // Prisma calcula algunos defaults de fecha en el cliente; el registro
+          // del aviso debe usar el reloj de la transacción de PostgreSQL.
+          const [reloj] = await tx.$queryRaw<
+            { fecha: Date }[]
+          >`SELECT CURRENT_TIMESTAMP AS fecha`;
           return tx.notificacion.create({
             data: {
-              realizado_en: await fechaOperacion(tx),
+              realizado_en: reloj.fecha,
               id_pago_pendiente: id(b.id_pago_pendiente),
               tipo: elegir(b.tipo, [
                 "recordatorio_1_dia",

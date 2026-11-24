@@ -54,7 +54,7 @@ const RegisterClientForm = ({ volver }: { volver: string }) => {
   }
 
   return (
-    <AuthLayout title="CREAR CUENTA DE CLIENTE" onSubmit={register} variant="wide">
+    <AuthLayout title="CREAR CUENTA DE CLIENTE" onSubmit={register} variant="wide" centered showWelcome={false}>
       <div className={styles.fieldsGrid}>
         <div className={styles.inputGroup}>
           <label className={styles.label} htmlFor="nombre">
@@ -146,7 +146,7 @@ const RegisterClientForm = ({ volver }: { volver: string }) => {
       {errorMessage && <p className={styles.errorText}>{errorMessage}</p>}
 
       <AuthButton text="Crear Cuenta" type="submit" disabled={cargando} />
-      <Link href={volver}>Regresar</Link>
+      <Link href={volver} className={styles.enlace}>Regresar</Link>
     </AuthLayout>
   );
 };

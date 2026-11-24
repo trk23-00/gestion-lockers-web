@@ -1,9 +1,9 @@
 "use client";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { type PanelRole } from "@/lib/paneles";
-import { usePanelData } from "./usePanelData";
+import { panelPorNivel, rutaPanel, type PanelRole } from "@/lib/paneles";
+import { type DashboardData } from "./sgap-types";
 import { navigation } from "./sgap-navigation";
 import Workspace from "./Workspace";
 import styles from "./UserDashboard.module.css";
@@ -11,22 +11,77 @@ import styles from "./UserDashboard.module.css";
 export default function UserDashboard({ role }: { role: PanelRole }) {
   const router = useRouter();
   const modules = navigation(role);
-  const { data, error, loading, refresh, setError } = usePanelData(role);
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [loading, setLoading] = useState(true);
   const [section, setSection] = useState("general"),
     [tab, setTab] = useState(""),
     [branch, setBranch] = useState(""),
-    [mobileOpen, setMobileOpen] = useState(false);
+    [mobileOpen, setMobileOpen] = useState(false),
+    [receptionExpanded, setReceptionExpanded] = useState(false),
+    [usersExpanded, setUsersExpanded] = useState(false);
   const current = modules.find((m) => m.id === section);
   const title =
-    section === "cuenta" ? "Mi cuenta" : current?.label || "Panel general";
+    section === "cuenta"
+      ? "Mi cuenta"
+      : section === "recepcion" || section === "usuarios"
+        ? tab || current?.label || (section === "usuarios" ? "Usuarios" : "Recepción")
+        : current?.label || "Panel general";
+  const refresh = useCallback(async () => {
+    const res = await fetch("/api/sgap/datos", { cache: "no-store" });
+    const result = await res.json();
+    if (res.status === 401) {
+      router.replace("/login");
+      throw new Error(result.message);
+    }
+    if (!res.ok)
+      throw new Error(result.message || "No se pudo cargar la información.");
+    if (panelPorNivel[result.usuario.nivel] !== role) {
+      router.replace(rutaPanel(result.usuario.nivel));
+      return;
+    }
+    setData(result);
+    setError("");
+  }, [role, router, setData, setError]);
+  useEffect(() => {
+    let cancelled = false;
+    void Promise.resolve()
+      .then(refresh)
+      .catch((e) => {
+        if (!cancelled) setError(e.message);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [refresh]);
+  useEffect(() => {
+    if (section === "recepcion") setReceptionExpanded(true);
+    if (section === "usuarios") setUsersExpanded(true);
+  }, [section]);
   useEffect(() => {
     const sync = () => {
       const p = new URLSearchParams(window.location.search);
-      const id = p.get("seccion") || "general";
+      const requestedId = p.get("seccion") || "general";
+      const requestedTab = p.get("vista") || "";
+      const id =
+        requestedId === "recepcion" && requestedTab === "Entregas"
+          ? "entregas"
+          : requestedId;
+      const wanted =
+        id === "recepcion" && requestedTab === "Documentos"
+          ? "Documentos registrados"
+          : id === "recepcion" && requestedTab === "Recepción"
+            ? "Nueva recepción"
+            : id === "usuarios" &&
+                ["Personal", "Clientes"].includes(requestedTab)
+              ? "Usuarios registrados"
+              : requestedTab;
       const mod = navigation(role).find((m) => m.id === id);
       setSection(mod ? id : id === "cuenta" ? "cuenta" : "general");
-      const wanted = p.get("vista") || "";
       setTab(mod?.tabs.includes(wanted) ? wanted : mod?.tabs[0] || "");
     };
     queueMicrotask(sync);
@@ -72,7 +127,7 @@ export default function UserDashboard({ role }: { role: PanelRole }) {
     setNotice(result.message);
     // El fallo de lectura no debe invitar a repetir una operación confirmada.
     try {
-      await refresh({ force: true });
+      await refresh();
     } catch {
       setError(
         "El cambio se guardó. No se pudo actualizar la vista; pulse Actualizar.",
@@ -131,14 +186,58 @@ export default function UserDashboard({ role }: { role: PanelRole }) {
               {(i === 0 || modules[i - 1].group !== m.group) && (
                 <p className={styles.navGroup}>{m.group}</p>
               )}
-              <button
-                className={`${styles.navItem} ${section === m.id ? styles.active : ""}`}
-                onClick={() => navigate(m.id)}
-                aria-current={section === m.id ? "page" : undefined}
-              >
-                <Image src={`/figma/${m.icon}`} alt="" width={20} height={20} />
-                {m.label}
-              </button>
+              {m.id === "recepcion" || m.id === "usuarios" ? (
+                <>
+                  <button
+                    className={`${styles.navItem} ${section === m.id ? styles.active : ""}`}
+                    onClick={() =>
+                      m.id === "recepcion"
+                        ? setReceptionExpanded((expanded) => !expanded)
+                        : setUsersExpanded((expanded) => !expanded)
+                    }
+                    aria-expanded={m.id === "recepcion" ? receptionExpanded : usersExpanded}
+                    aria-controls={`submenu-${m.id}`}
+                    aria-current={section === m.id ? "page" : undefined}
+                  >
+                    <Image src={`/figma/${m.icon}`} alt="" width={20} height={20} />
+                    <span className={styles.navItemLabel}>{m.label}</span>
+                    <svg
+                      className={`${styles.navChevron} ${(m.id === "recepcion" ? receptionExpanded : usersExpanded) ? styles.chevronOpen : ""}`}
+                      viewBox="0 0 16 16"
+                      fill="none"
+                      aria-hidden="true"
+                    >
+                      <path d="m3.5 6 4.5 4 4.5-4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </button>
+                  {(m.id === "recepcion" ? receptionExpanded : usersExpanded) && (
+                    <div className={styles.submenu} id={`submenu-${m.id}`}>
+                      {m.tabs.map((item) => {
+                        const active = section === m.id && tab === item;
+                        return (
+                          <button
+                            key={item}
+                            className={`${styles.submenuItem} ${active ? styles.submenuItemActive : ""}`}
+                            onClick={() => navigate(m.id, item)}
+                            aria-current={active ? "page" : undefined}
+                          >
+                            {item}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <button
+                  className={`${styles.navItem} ${section === m.id ? styles.active : ""}`}
+                  onClick={() => navigate(m.id)}
+                  aria-current={section === m.id ? "page" : undefined}
+                >
+                  <Image src={`/figma/${m.icon}`} alt="" width={20} height={20} />
+                  {m.label}
+                </button>
+              )}
             </div>
           ))}
         </nav>
@@ -231,7 +330,7 @@ export default function UserDashboard({ role }: { role: PanelRole }) {
               </small>
             </div>
           </div>
-          {current?.tabs.length ? (
+          {current && current.tabs.length > 0 && section !== "recepcion" && section !== "usuarios" ? (
             <div
               className={styles.tabs}
               role="tablist"
@@ -260,7 +359,10 @@ export default function UserDashboard({ role }: { role: PanelRole }) {
               {error}{" "}
               <button
                 onClick={() => {
-                  void refresh({ force: true }).catch(() => {});
+                  setLoading(true);
+                  refresh()
+                    .catch((e) => setError(e.message))
+                    .finally(() => setLoading(false));
                 }}
               >
                 Actualizar
