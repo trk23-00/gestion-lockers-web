@@ -761,6 +761,33 @@ export default function Workspace({
       },
     );
   }
+  function createCustomerAccess(c: Client) {
+    const parts = c.persona.nombre.trim().split(/\s+/);
+    open(
+      "Crear acceso de cliente",
+      "clientes",
+      [
+        text("nombre", "Nombre", true),
+        text("apellido", "Apellidos", true),
+        text("correo", "Correo de acceso", true, "email"),
+        {
+          ...text("password", "Contraseña inicial", true, "password"),
+          help: "Al menos 8 caracteres. Entregue estas credenciales al cliente por su canal habitual.",
+        },
+      ],
+      {
+        id: c.id_cliente,
+        accion: "crear_cuenta",
+        nombre: parts[0] || "",
+        apellido: parts.slice(1).join(" "),
+        correo: c.persona.correo || "",
+      },
+      "PATCH",
+      {
+        help: "Habilita una cuenta vinculada a esta ficha y a su historial. Verifique la identidad del cliente antes de crearla.",
+      },
+    );
+  }
   function customer(c: Client) {
     open(
       "Editar cliente",
@@ -1264,8 +1291,8 @@ export default function Workspace({
       </>
     );
   } else if (section === "recepcion") {
-    content =
-      tab === "Documentos" ? (
+    if (tab === "Documentos registrados") {
+      content = (
         <Card title="Documentos registrados">
           <Table
             rows={data.documentos.filter(
@@ -1300,105 +1327,109 @@ export default function Workspace({
             )}
           />
         </Card>
-      ) : (
+      );
+    } else if (tab === "Corregir recepción") {
+      content = (
         <>
           <div className={styles.sectionNotice}>
-            {tab === "Entregas"
-              ? "Verifica el código, la sucursal y el saldo completo antes de entregar."
-              : "Un documento puede contener varios paquetes con diferentes destinatarios y lockers."}
+            Solo se pueden corregir la descripción y el peso de los paquetes
+            recibidos o almacenados. La recepción y su documento se conservan;
+            no se permite eliminar registros.
           </div>
-          <Card
-            title={
-              tab === "Entregas"
-                ? "Paquetes por entregar"
-                : "Recepciones registradas"
-            }
-            action={
-              <button
-                className={styles.primary}
-                onClick={tab === "Entregas" ? () => delivery() : reception}
-              >
-                {tab === "Entregas" ? "Registrar entrega" : "Nueva recepción"}
-              </button>
-            }
-          >
+          <Card title="Recepciones que pueden corregirse">
             {packageTable(
-              tab === "Entregas"
-                ? packages.filter((p) =>
-                    ["recibido", "almacenado"].includes(p.estado),
-                  )
-                : packages,
+              packages.filter((p) =>
+                ["recibido", "almacenado"].includes(p.estado),
+              ),
               (p) => (
-                <>
-                  {tab === "Entregas" ? (
-                    <button
-                      className={styles.textButton}
-                      disabled={debt(p) > 0}
-                      onClick={() => delivery(p)}
-                    >
-                      {debt(p) > 0 ? "Saldo pendiente" : "Entregar"}
-                    </button>
-                  ) : (
-                    ["recibido", "almacenado"].includes(p.estado) && (
-                      <>
-                        <button
-                          className={styles.textButton}
-                          onClick={() =>
-                            open(
-                              "Editar paquete",
-                              "paquetes",
-                              [
-                                text(
-                                  "descripcion",
-                                  "Descripción",
-                                  true,
-                                  "textarea",
-                                ),
-                                {
-                                  ...text(
-                                    "peso_kg",
-                                    "Peso en kg",
-                                    false,
-                                    "number",
-                                  ),
-                                  min: "0.001",
-                                  step: "0.001",
-                                },
-                              ],
-                              {
-                                id: p.id_paquete,
-                                descripcion: p.descripcion,
-                                peso_kg: p.peso_kg || "",
-                              },
-                              "PATCH",
-                            )
-                          }
-                        >
-                          Editar
-                        </button>
-                        {admin && (
-                          <button
-                            className={styles.textButton}
-                            onClick={() =>
-                              remove(
-                                "Eliminar recepción de paquete",
-                                "paquetes",
-                                { id: p.id_paquete },
-                              )
-                            }
-                          >
-                            Eliminar
-                          </button>
-                        )}
-                      </>
+                <button
+                  className={styles.textButton}
+                  onClick={() =>
+                    open(
+                      "Corregir recepción",
+                      "paquetes",
+                      [
+                        text("descripcion", "Descripción", true, "textarea"),
+                        {
+                          ...text("peso_kg", "Peso en kg", false, "number"),
+                          min: "0.001",
+                          step: "0.001",
+                        },
+                      ],
+                      {
+                        id: p.id_paquete,
+                        descripcion: p.descripcion,
+                        peso_kg: p.peso_kg || "",
+                      },
+                      "PATCH",
+                      {
+                        help: "La corrección está limitada a la descripción y al peso. No cambia el código, la fecha, la sucursal, el destinatario ni el documento original.",
+                      },
                     )
-                  )}
-                </>
+                  }
+                >
+                  Corregir
+                </button>
               ),
             )}
           </Card>
         </>
       );
+    } else {
+      content = (
+        <>
+          <div className={styles.sectionNotice}>
+            Un documento puede contener varios paquetes con diferentes
+            destinatarios y lockers.
+          </div>
+          <Card
+            title="Paquetes recibidos"
+            action={
+              <button className={styles.primary} onClick={reception}>
+                Nueva recepción
+              </button>
+            }
+          >
+            {packageTable(
+              packages.filter((p) =>
+                ["recibido", "almacenado"].includes(p.estado),
+              ),
+            )}
+          </Card>
+        </>
+      );
+    }
+  } else if (section === "entregas") {
+    content = (
+      <>
+        <div className={styles.sectionNotice}>
+          Verifica el código, la sucursal y el saldo completo antes de entregar.
+        </div>
+        <Card
+          title="Paquetes por entregar"
+          action={
+            <button className={styles.primary} onClick={() => delivery()}>
+              Registrar entrega
+            </button>
+          }
+        >
+          {packageTable(
+            packages.filter((p) =>
+              ["recibido", "almacenado"].includes(p.estado),
+            ),
+            (p) => (
+              <button
+                className={styles.textButton}
+                disabled={debt(p) > 0}
+                onClick={() => delivery(p)}
+              >
+                {debt(p) > 0 ? "Saldo pendiente" : "Entregar"}
+              </button>
+            ),
+          )}
+        </Card>
+      </>
+    );
   } else if (section === "almacenes") {
     if (tab === "Sucursales")
       content = (
@@ -1747,7 +1778,7 @@ export default function Workspace({
           )}
         </Card>
       );
-  } else if (section === "usuarios" || section === "clientes") {
+  } else if (section === "usuarios") {
     if (tab === "Cargos y accesos")
       content = (
         <Card title="Permisos por cargo">
@@ -1791,59 +1822,190 @@ export default function Workspace({
           </p>
         </Card>
       );
-    else if (tab === "Personal")
+    else if (tab === "Nuevo usuario")
       content = (
-        <Card
-          title="Personal"
-          action={
-            <Link href="/registerEmpleado" className={styles.primary}>
-              Nuevo empleado
-            </Link>
-          }
-        >
-          <Table
-            rows={data.personal.filter(
-              (s) => !branch || s.persona.empleado.id_sucursal === branch,
-            )}
-            rowKey={(s) => String(s.id)}
-            columns={[
-              { title: "Nombre", value: (s) => `${s.nombre} ${s.apellido}` },
-              { title: "Correo", value: (s) => s.correo },
-              { title: "Cargo", value: (s) => s.rol.nombre_rol },
-              {
-                title: "Sucursal",
-                value: (s) => branchName(s.persona.empleado.id_sucursal),
-              },
-              {
-                title: "Estado",
-                value: (s) => (s.activo ? "Activo" : "Inactivo"),
-              },
-            ]}
-            actions={(s) => (
-              <>
+        <>
+          <div className={styles.twoColumns}>
+            <Card
+              title="Crear cuenta de empleado"
+              action={
+                <Link href="/registerEmpleado" className={styles.primary}>
+                  Registrar empleado
+                </Link>
+              }
+            >
+              <p className={styles.muted}>
+                Registre al personal que utilizará el sistema. Podrá asignar un
+                cargo y una sucursal desde el formulario.
+              </p>
+            </Card>
+            <Card
+              title="Crear cuenta de cliente"
+              action={
+                <Link href="/registerCliente" className={styles.primary}>
+                  Registrar cliente
+                </Link>
+              }
+            >
+              <p className={styles.muted}>
+                Cree una cuenta para un cliente nuevo. Su perfil quedará
+                disponible para relacionarlo con sus paquetes.
+              </p>
+            </Card>
+          </div>
+          <Card title="Crear acceso a un cliente registrado">
+            <p className={styles.muted}>
+              Habilite el acceso al sistema para un cliente que ya tiene una
+              ficha, sin duplicar su información ni su historial.
+            </p>
+            <Table
+              rows={data.clientes.filter(
+                (c) => !c.persona.usuario && c.persona.activo && Boolean(c.persona.ci),
+              )}
+              rowKey={(c) => c.id_cliente}
+              columns={[
+                { title: "Cliente", value: (c) => c.persona.nombre },
+                { title: "CI", value: (c) => c.persona.ci || "—" },
+                { title: "Teléfono", value: (c) => c.persona.telefono || "—" },
+                { title: "Correo", value: (c) => c.persona.correo || "—" },
+              ]}
+              actions={(c) => (
+                <button
+                  className={styles.textButton}
+                  onClick={() => createCustomerAccess(c)}
+                >
+                  Crear acceso
+                </button>
+              )}
+              empty="No hay clientes activos sin cuenta y con CI registrado."
+            />
+          </Card>
+        </>
+      );
+    else if (tab === "Usuarios registrados")
+      content = (
+        <>
+          <Card title="Personal registrado">
+            <Table
+              rows={data.personal.filter(
+                (s) => !branch || s.persona.empleado.id_sucursal === branch,
+              )}
+              rowKey={(s) => String(s.id)}
+              columns={[
+                { title: "Nombre", value: (s) => `${s.nombre} ${s.apellido}` },
+                { title: "CI", value: (s) => s.ci },
+                { title: "Correo", value: (s) => s.correo },
+                { title: "Cargo", value: (s) => s.rol.nombre_rol },
+                {
+                  title: "Sucursal",
+                  value: (s) => branchName(s.persona.empleado.id_sucursal),
+                },
+                {
+                  title: "Estado",
+                  value: (s) => (s.activo ? "Activo" : "Inactivo"),
+                },
+              ]}
+            />
+          </Card>
+          <Card title="Clientes registrados">
+            <Table
+              rows={data.clientes}
+              rowKey={(c) => c.id_cliente}
+              columns={[
+                { title: "Cliente", value: (c) => c.persona.nombre },
+                { title: "CI", value: (c) => c.persona.ci || "—" },
+                { title: "Teléfono", value: (c) => c.persona.telefono || "—" },
+                { title: "Correo", value: (c) => c.persona.correo || "—" },
+                {
+                  title: "Acceso al sistema",
+                  value: (c) => (c.persona.usuario ? "Con cuenta" : "Sin cuenta"),
+                },
+                {
+                  title: "Estado",
+                  value: (c) => (c.persona.activo ? "Activo" : "Inactivo"),
+                },
+              ]}
+            />
+          </Card>
+        </>
+      );
+    else if (tab === "Actualizar usuario")
+      content = (
+        <>
+          <Card title="Actualizar datos del personal">
+            <Table
+              rows={data.personal.filter(
+                (s) => !branch || s.persona.empleado.id_sucursal === branch,
+              )}
+              rowKey={(s) => String(s.id)}
+              columns={[
+                { title: "Nombre", value: (s) => `${s.nombre} ${s.apellido}` },
+                { title: "Correo", value: (s) => s.correo },
+                { title: "Cargo", value: (s) => s.rol.nombre_rol },
+                {
+                  title: "Sucursal",
+                  value: (s) => branchName(s.persona.empleado.id_sucursal),
+                },
+                {
+                  title: "Estado",
+                  value: (s) => (s.activo ? "Activo" : "Inactivo"),
+                },
+              ]}
+              actions={(s) => (
                 <button
                   className={styles.textButton}
                   onClick={() => staffForm(s)}
                 >
                   Editar
                 </button>
+              )}
+            />
+          </Card>
+          <Card title="Actualizar datos de clientes">
+            <Table
+              rows={data.clientes}
+              rowKey={(c) => c.id_cliente}
+              columns={[
+                { title: "Cliente", value: (c) => c.persona.nombre },
+                { title: "CI", value: (c) => c.persona.ci || "—" },
+                { title: "Teléfono", value: (c) => c.persona.telefono || "—" },
+                { title: "Correo", value: (c) => c.persona.correo || "—" },
+                {
+                  title: "Acceso",
+                  value: (c) => (c.persona.usuario ? "Con cuenta" : "Sin cuenta"),
+                },
+                {
+                  title: "Estado",
+                  value: (c) => (c.persona.activo ? "Activo" : "Inactivo"),
+                },
+              ]}
+              actions={(c) => (
                 <button
                   className={styles.textButton}
-                  disabled={s.id === data.usuario.id}
-                  onClick={() =>
-                    remove("Eliminar empleado sin historial", "personal", {
-                      id: String(s.id),
-                    })
-                  }
+                  onClick={() => customer(c)}
                 >
-                  Eliminar
+                  Editar
                 </button>
-              </>
-            )}
-          />
+              )}
+            />
+          </Card>
+          <p className={styles.muted}>
+            Las cuentas y fichas no se eliminan. Para retirar el acceso de un
+            usuario, utilice la opción de desactivación del formulario de edición.
+          </p>
+        </>
+      );
+    else
+      content = (
+        <Card title="Usuarios">
+          <p className={styles.muted}>
+            Seleccione una opción del menú Usuarios para crear, consultar o
+            actualizar cuentas y fichas del sistema.
+          </p>
         </Card>
       );
-    else if (tab === "Historial")
+  } else if (section === "clientes") {
+    if (tab === "Historial")
       content = (
         <Card title="Historial de paquetes por cliente">
           {packageTable(packages)}
@@ -1877,80 +2039,12 @@ export default function Workspace({
             actions={
               staffReception
                 ? (c) => (
-                    <>
-                      <button
-                        className={styles.textButton}
-                        onClick={() => customer(c)}
-                      >
-                        Editar
-                      </button>
-                      {admin &&
-                        (!c.persona.usuario && c.persona.activo ? (
-                          <button
-                            className={styles.textButton}
-                            onClick={() =>
-                              open(
-                                "Crear acceso de cliente",
-                                "clientes",
-                                [
-                                  text("nombre", "Nombre", true),
-                                  text("apellido", "Apellidos", true),
-                                  text(
-                                    "correo",
-                                    "Correo de acceso",
-                                    true,
-                                    "email",
-                                  ),
-                                  {
-                                    ...text(
-                                      "password",
-                                      "Contraseña inicial",
-                                      true,
-                                      "password",
-                                    ),
-                                    help: "Al menos 8 caracteres. Entregue estas credenciales al cliente por su canal habitual.",
-                                  },
-                                ],
-                                {
-                                  id: c.id_cliente,
-                                  accion: "crear_cuenta",
-                                  nombre: c.persona.nombre.split(" ")[0],
-                                  apellido: c.persona.nombre
-                                    .split(" ")
-                                    .slice(1)
-                                    .join(" "),
-                                  correo: c.persona.correo || "",
-                                },
-                                "PATCH",
-                                {
-                                  help: "Habilita una cuenta vinculada a esta ficha y a su historial. Verifique la identidad del cliente antes de crearla.",
-                                },
-                              )
-                            }
-                          >
-                            Crear acceso
-                          </button>
-                        ) : null)}
-                      {admin && (
-                        <button
-                          className={styles.textButton}
-                          onClick={() =>
-                            c.persona.usuario
-                              ? open(
-                                  "Eliminar cuenta de cliente",
-                                  "clientes",
-                                  [],
-                                  { id: c.id_cliente, accion: "eliminar_cuenta" },
-                                  "DELETE",
-                                  { help: "Se eliminará el acceso del cliente. Su ficha y sus paquetes se conservarán." },
-                                )
-                              : remove("Eliminar ficha de cliente", "clientes", { id: c.id_cliente })
-                          }
-                        >
-                          {c.persona.usuario ? "Eliminar cuenta" : "Eliminar ficha"}
-                        </button>
-                      )}
-                    </>
+                    <button
+                      className={styles.textButton}
+                      onClick={() => customer(c)}
+                    >
+                      Editar
+                    </button>
                   )
                 : undefined
             }

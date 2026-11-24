@@ -58,7 +58,7 @@ const LoginForm = () => {
   }
 
   return (
-    <AuthLayout title="INICIAR SESIÓN" onSubmit={login}>
+    <AuthLayout title="INICIAR SESIÓN" onSubmit={login} showWelcome showPublicHeader centered={false}>
       <p className={styles.intro}>¡Bienvenido de nuevo!</p>
       <div className={styles.inputGroup}>
         <label className={styles.label} htmlFor="correo">Correo Electrónico</label>

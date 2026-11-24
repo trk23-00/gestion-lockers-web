@@ -134,18 +134,25 @@
   }
 }
 
-/* Los campos siempre se muestran en una sola columna. */
+/* Dos columnas para aprovechar el ancho y mantener el formulario dentro del viewport. */
 .fieldsGrid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: clamp(0.35rem, 0.75svh, 0.65rem);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: clamp(0.75rem, 1.5vw, 1.5rem);
+  row-gap: clamp(0.35rem, 0.75svh, 0.65rem);
   width: 100%;
   min-width: 0;
 }
 
+@media (max-width: 50rem) {
+  .fieldsGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 @media (min-width: 55.01rem) and (max-height: 42rem) {
   .fieldsGrid {
-    gap: 0.3rem;
+    row-gap: 0.3rem;
   }
 }
 
@@ -154,10 +161,8 @@
   .inputGroup select {
     height: 2.4rem;
   }
-}
 
-@media (max-width: 37.5rem) and (max-height: 42rem) {
   .fieldsGrid {
-    gap: 0.4rem;
+    row-gap: 0.4rem;
   }
 }

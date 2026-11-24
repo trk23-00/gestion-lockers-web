@@ -6,11 +6,9 @@ export default async function PasswordPage() {
   const usuario = await obtenerUsuarioSesion();
 
   return (
-    <main className="authPage">
-      <PasswordForm
-        correoCuenta={usuario?.correo}
-        volver={usuario ? `${rutaPanel(usuario.rol.nivel)}?seccion=cuenta` : "/login"}
-      />
-    </main>
+    <PasswordForm
+      correoCuenta={usuario?.correo}
+      volver={usuario ? `${rutaPanel(usuario.rol.nivel)}?seccion=cuenta` : "/login"}
+    />
   );
 }

@@ -8,12 +8,8 @@ export default async function RegistroCliente() {
   const nivel = usuario?.rol.nivel;
   const panel = nivel ? rutaPanel(nivel) : "/login";
   const volver = nivel === NIVEL_ROL.ADMINISTRADOR
-    ? `${panel}?seccion=usuarios`
+    ? `${panel}?seccion=usuarios&vista=Usuarios%20registrados`
     : nivel === NIVEL_ROL.RECEPCIONISTA ? `${panel}?seccion=clientes` : panel;
 
-  return (
-    <main className="authPage">
-      <RegisterClientForm volver={volver} />
-    </main>
-  );
+  return <RegisterClientForm volver={volver} />;
 }

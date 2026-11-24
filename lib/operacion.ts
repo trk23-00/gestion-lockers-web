@@ -309,12 +309,12 @@ export async function modificar(
   b: Body,
 ) {
   const metodos: Record<string, string[]> = {
-    clientes: ["POST", "PATCH", "DELETE"],
-    personal: ["POST", "PATCH", "DELETE"],
+    clientes: ["POST", "PATCH"],
+    personal: ["POST", "PATCH"],
     sucursales: ["POST", "PATCH", "DELETE"],
     lockers: ["POST", "PATCH", "DELETE"],
     recepciones: ["POST"],
-    paquetes: ["PATCH", "DELETE"],
+    paquetes: ["PATCH"],
     ubicaciones: ["PATCH"],
     entregas: ["POST"],
     traslados: ["POST", "PATCH", "DELETE"],
@@ -397,15 +397,6 @@ export async function modificar(
             data: { nombre: `${nombre} ${apellido}`, correo },
           });
           return { id: c.id_cliente };
-        }
-        if (method === "DELETE") {
-          permitir(s, 1);
-          exigir(
-            !c.persona.usuario,
-            "Desactive la cuenta del cliente desde su ficha; las cuentas conservan su historial.",
-          );
-          await tx.cliente.delete({ where: { id_cliente: c.id_cliente } });
-          return tx.persona.delete({ where: { id_persona: c.id_cliente } });
         }
         const data = {
           nombre: texto(b.nombre, 150, true),
@@ -515,16 +506,6 @@ export async function modificar(
           account.id !== s.id || (b.activo !== false && level === 1),
           "No puede quitarse su propio acceso de administrador.",
         );
-        if (method === "DELETE") {
-          exigir(account.id !== s.id, "No puede eliminar su propia cuenta.");
-          await tx.usuario.delete({ where: { id: account.id } });
-          await tx.empleado.delete({
-            where: { id_empleado: account.id_persona },
-          });
-          return tx.persona.delete({
-            where: { id_persona: account.id_persona },
-          });
-        }
         const activo = b.activo !== false;
         const password = texto(b.password, 200);
         exigir(
@@ -726,41 +707,6 @@ export async function modificar(
           ["recibido", "almacenado"].includes(p.estado),
           "El paquete ya fue entregado o está en traslado.",
         );
-        if (method === "DELETE") {
-          permitir(s, 1);
-          exigir(
-            (await tx.movimiento.count({
-              where: { id_paquete: p.id_paquete },
-            })) === 0 &&
-              (await tx.detalle_traslado.count({
-                where: { id_paquete: p.id_paquete },
-              })) === 0 &&
-              (await tx.notificacion.count({
-                where: { pago_pendiente: { id_paquete: p.id_paquete } },
-              })) === 0,
-            "El paquete tiene historial; no se puede eliminar.",
-          );
-          await tx.pago_pendiente.deleteMany({
-            where: { id_paquete: p.id_paquete },
-          });
-          const details = await tx.detalle_documento.findMany({
-            where: { id_paquete: p.id_paquete },
-          });
-          await tx.detalle_documento.deleteMany({
-            where: { id_paquete: p.id_paquete },
-          });
-          await tx.paquete.delete({ where: { id_paquete: p.id_paquete } });
-          for (const d of details)
-            if (
-              !(await tx.detalle_documento.count({
-                where: { id_documento: d.id_documento },
-              }))
-            )
-              await tx.documento.delete({
-                where: { id_documento: d.id_documento },
-              });
-          return { id: p.id_paquete };
-        }
         if (recurso === "ubicaciones") {
           const l = opcional(b.id_locker);
           exigir(p.id_sucursal_actual, "El paquete no está en una sucursal.");

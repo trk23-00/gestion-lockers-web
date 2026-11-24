@@ -135,7 +135,7 @@ a.contactCard:hover { background: #fff5c6; }
 .socialItems > div { display: grid; justify-items: center; }
 .socialItems span { display: grid; place-items: center; background: #ffe159; border-radius: 50%; width: calc(53 * var(--u)); height: calc(53 * var(--u)); }
 .socialItems img { width: calc(36 * var(--u)); height: calc(36 * var(--u)); }
-.socialItems p { font-family: var(--public-ramabhadra), sans-serif; font-size: calc(16 * var(--u)); letter-spacing: .04em; margin-top: calc(7 * var(--u)); }
+.socialItems p { font-family: var(--public-ramabhadra), sans-serif; font-size: calc(15 * var(--u)); letter-spacing: .04em; margin-top: calc(7 * var(--u)); }
 .copyright { max-width: 1814px; margin: calc(25 * var(--u)) auto 0 !important; padding-top: calc(30 * var(--u)); border-top: 3px solid #ffbc2b; text-align: center; font-size: calc(20 * var(--u)); line-height: 1.5; color: #f5d3b2; }
 
 @media (min-width: 1920px) {

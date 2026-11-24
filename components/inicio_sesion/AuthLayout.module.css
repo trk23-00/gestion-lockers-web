@@ -1,17 +1,37 @@
+.authShell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100svh;
+  width: 100%;
+  background: #eac78e;
+}
+
+.publicHeaderScope {
+  --u: min(0.0520833333vw, 1px);
+  --yellow: #ffcc16;
+  position: relative;
+  z-index: 5;
+  width: 100%;
+  flex: 0 0 auto;
+  color: #202a3a;
+}
+
 .authPage {
   --sgap-yellow: #f9c635;
   --sgap-brown: #7c2d12;
   --sgap-gray: #9e9e9e;
 
   position: relative;
+  isolation: isolate;
   box-sizing: border-box;
   display: grid;
-  grid-template-columns: minmax(0, 26rem) minmax(0, 27rem);
+  grid-template-columns: minmax(0, 34rem) minmax(0, 27rem);
   align-items: center;
   justify-content: center;
-  column-gap: clamp(1rem, 10vw, 10rem);
-  width: 100%;
+  column-gap: clamp(1rem, 7vw, 7rem);
+  flex: 1 1 auto;
   min-height: 100svh;
+  width: 100%;
   padding: clamp(0.6rem, 1.5vw, 1.25rem);
   background: #eac78e url("/login/fondo-cajas.png") center / cover no-repeat;
   color: #171717;
@@ -24,10 +44,8 @@
   box-sizing: border-box;
 }
 
-/* La imagen continúa cubriendo toda la pantalla; el aside contiene
-   únicamente el mensaje que acompaña al formulario. */
 .authPage::before {
-  position: fixed;
+  position: absolute;
   inset: 0;
   z-index: 0;
   background: linear-gradient(
@@ -38,6 +56,10 @@
   );
   content: "";
   pointer-events: none;
+}
+
+.pageWithHeader {
+  min-height: calc(100svh - 7.5rem);
 }
 
 .illustration {
@@ -53,18 +75,19 @@
 
 .welcome {
   width: 100%;
-  padding: clamp(1.1rem, 2vw, 2rem);
-  border: 0.0625rem solid rgba(255, 255, 255, 0.35);
-  border-radius: 1.375rem;
-  background: rgba(36, 26, 20, 0.51);
-  box-shadow: 0 1rem 3.4375rem rgba(0, 0, 0, 0.22);
+  max-width: 34rem;
+  padding: clamp(2rem, 3vw, 3.25rem);
+  border: 0.0625rem solid rgba(255, 255, 255, 0.42);
+  border-radius: 1.75rem;
+  background: rgba(36, 26, 20, 0.62);
+  box-shadow: 0 1.25rem 4rem rgba(0, 0, 0, 0.3);
   color: #fff;
-  backdrop-filter: blur(0.4375rem);
+  backdrop-filter: blur(0.5rem);
 }
 
 .welcome h2 {
-  margin: 0.6rem 0 0.7rem;
-  font-size: clamp(1.1rem, 1.5vw, 1.7rem);
+  margin: 0.85rem 0 1rem;
+  font-size: clamp(1.8rem, 2.15vw, 2.55rem);
   font-weight: 700;
   line-height: 1.2;
   letter-spacing: 0;
@@ -76,15 +99,15 @@
 
 .welcome p {
   margin: 0;
-  font-size: clamp(0.875rem, 1.03vw, 1.05rem);
-  line-height: 1.45;
+  font-size: clamp(1rem, 1.1vw, 1.2rem);
+  line-height: 1.55;
 }
 
 .eyebrow {
   color: #ffd56c;
-  font-size: clamp(0.75rem, 0.85vw, 1rem);
+  font-size: clamp(0.9rem, 0.95vw, 1.1rem);
   font-weight: 700;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.18em;
 }
 
 .formArea,
@@ -103,6 +126,18 @@
   min-height: 0;
   margin: 0;
   padding-block: clamp(0.35rem, 1svh, 0.9rem);
+}
+
+.formAreaCentered {
+  grid-column: auto;
+  width: min(100%, 32rem);
+  max-width: 32rem;
+  align-items: center;
+}
+
+.formAreaCenteredWide {
+  width: min(100%, 58rem);
+  max-width: 58rem;
 }
 
 .authContainer {
@@ -140,12 +175,30 @@
   font-size: clamp(1.55rem, 1.95vw, 2.15rem);
 }
 
+.centered {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.centered::before {
+  background: rgba(23, 13, 5, 0.28);
+}
+
+.centered .illustration {
+  display: none;
+}
+
 /* Tablet y móvil: un solo bloque centrado y sin cortes horizontales. */
 @media (max-width: 55rem) {
   .authPage {
     display: flex;
     justify-content: center;
     padding: 0.6rem;
+  }
+
+  .pageWithHeader {
+    min-height: calc(100svh - 9rem);
   }
 
   .authPage::before {
@@ -158,9 +211,13 @@
 
   .formArea,
   .formAreaWide {
-    width: min(100%, 27rem);
-    min-height: calc(100svh - 1.2rem);
+    width: min(100%, 32rem);
+    min-height: 0;
     margin: 0 auto;
+  }
+
+  .formAreaCenteredWide {
+    width: min(100%, 58rem);
   }
 }
 
@@ -171,7 +228,7 @@
 
   .formArea,
   .formAreaWide {
-    min-height: calc(100svh - 1rem);
+    width: 100%;
   }
 
   .authContainer {
@@ -205,7 +262,7 @@
   }
 }
 
-/* Se permite scroll vertical en alturas extremas para conservar la accesibilidad. */
+/* En alturas extremas se conserva el acceso a todos los campos mediante scroll. */
 @media (max-height: 29rem) {
   .formArea,
   .formAreaWide {

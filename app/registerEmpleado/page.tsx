@@ -17,11 +17,9 @@ export default async function RegistroEmpleado() {
   });
 
   return (
-    <main className="authPage">
-      <RegisterForm sucursales={sucursales.map(({ id_sucursal, nombre }) => ({
-        id: String(id_sucursal),
-        nombre,
-      }))} />
-    </main>
+    <RegisterForm sucursales={sucursales.map(({ id_sucursal, nombre }) => ({
+      id: String(id_sucursal),
+      nombre,
+    }))} />
   );
 }
