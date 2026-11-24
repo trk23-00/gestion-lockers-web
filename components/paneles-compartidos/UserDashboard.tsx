@@ -59,8 +59,10 @@ export default function UserDashboard({ role }: { role: PanelRole }) {
     };
   }, [refresh]);
   useEffect(() => {
-    if (section === "recepcion") setReceptionExpanded(true);
-    if (section === "usuarios") setUsersExpanded(true);
+    queueMicrotask(() => {
+      if (section === "recepcion") setReceptionExpanded(true);
+      if (section === "usuarios") setUsersExpanded(true);
+    });
   }, [section]);
   useEffect(() => {
     const sync = () => {
