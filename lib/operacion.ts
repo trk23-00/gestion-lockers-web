@@ -7,6 +7,25 @@ import { obtenerUsuarioSesion } from "@/lib/sesion";
 type Sesion = NonNullable<Awaited<ReturnType<typeof obtenerUsuarioSesion>>>;
 type Body = Record<string, unknown>;
 type Tx = Prisma.TransactionClient;
+async function fechaOperacion(tx: Tx) {
+  const [reloj] = await tx.$queryRaw<
+    { fecha: Date }[]
+  >`SELECT CURRENT_TIMESTAMP AS fecha`;
+  return reloj.fecha;
+}
+function jsonAuditoria(value: unknown): Prisma.InputJsonValue {
+  return JSON.parse(
+    JSON.stringify(value, (_, v) => (typeof v === "bigint" ? String(v) : v)),
+  );
+}
+function camposCorreccion(b: Body, allowed: string[]) {
+  exigir(
+    Object.keys(b).every((key) =>
+      ["id", "accion", "motivo", ...allowed].includes(key),
+    ),
+    "Solo se pueden corregir los datos de esta operación, no los datos originales de recepción.",
+  );
+}
 export class ErrorOperacion extends Error {
   constructor(
     message: string,
@@ -138,6 +157,7 @@ export async function consultarDatos(s: Sesion) {
     diarios,
     mensuales,
     avisos,
+    auditorias,
   ] = await Promise.all([
     prisma.paquete.findMany({
       where: pkgWhere,
@@ -162,7 +182,7 @@ export async function consultarDatos(s: Sesion) {
             movimiento: { select: { id_movimiento: true, fecha: true } },
           },
         },
-        pago_anticipado: true,
+        pago_anticipado: { include: { movimiento: true } },
         devolucion: true,
       },
     }),
@@ -232,14 +252,25 @@ export async function consultarDatos(s: Sesion) {
           orderBy: { fecha: "desc" },
           include: {
             detalle_documento: {
-              include: { paquete: { select: { codigo: true } } },
+              include: {
+                paquete: { select: { codigo: true, id_paquete: true } },
+              },
             },
+            empleado: { select: { persona: { select: { nombre: true } } } },
             cliente: { include: { persona: { select: personaSelect } } },
           },
         }),
-    admin || client
+    admin || client || s.rol.nivel === 2
       ? prisma.movimiento.findMany({
-          where: client ? { paquete: pkgWhere } : {},
+          where: admin
+            ? {}
+            : client
+              ? { paquete: pkgWhere }
+              : { id_sucursal: branch },
+          include: {
+            paquete: { select: { codigo: true } },
+            empleado: { select: { persona: { select: { nombre: true } } } },
+          },
           orderBy: { fecha: "desc" },
         })
       : [],
@@ -272,6 +303,15 @@ export async function consultarDatos(s: Sesion) {
     admin
       ? prisma.$queryRaw`SELECT * FROM avisos_por_realizar ORDER BY vence_en`
       : [],
+    admin || s.rol.nivel === 2
+      ? prisma.auditoria_operacion.findMany({
+          where: admin ? {} : { id_sucursal: branch },
+          orderBy: { fecha: "desc" },
+          include: {
+            empleado: { select: { persona: { select: { nombre: true } } } },
+          },
+        })
+      : [],
   ]);
   return {
     usuario: {
@@ -299,6 +339,7 @@ export async function consultarDatos(s: Sesion) {
     diarios,
     mensuales,
     avisos,
+    auditorias,
   };
 }
 
@@ -317,6 +358,8 @@ export async function modificar(
     paquetes: ["PATCH"],
     ubicaciones: ["PATCH"],
     entregas: ["POST"],
+    correcciones_entrega: ["PATCH"],
+    correcciones_pago: ["PATCH"],
     traslados: ["POST", "PATCH", "DELETE"],
     cobros: ["POST"],
     devoluciones: ["POST"],
@@ -333,6 +376,183 @@ export async function modificar(
   return prisma.$transaction(
     async (tx) => {
       const nivel = s.rol.nivel;
+      if (recurso === "correcciones_entrega") {
+        permitir(s, 1, 2);
+        camposCorreccion(b, [
+          "ci_destinatario",
+          "nombre_destinatario",
+          "telefono_destinatario",
+          "observaciones",
+        ]);
+        const accion = elegir(b.accion, ["corregir", "anular"]);
+        const motivo = texto(b.motivo, 2000, true);
+        const initial = await tx.detalle_documento.findUnique({
+          where: { id_detalle: id(b.id) },
+        });
+        exigir(
+          initial?.tipo_documento === "entrega",
+          "Entrega inexistente.",
+          404,
+        );
+        await paqueteVisible(tx, s, String(initial.id_paquete));
+        await tx.$queryRaw`SELECT id_paquete FROM paquete WHERE id_paquete=${initial.id_paquete} FOR UPDATE`;
+        const before = await tx.detalle_documento.findUniqueOrThrow({
+          where: { id_detalle: initial.id_detalle },
+          include: { documento: true, paquete: true },
+        });
+        sucursal(s, String(before.documento.id_sucursal));
+        exigir(!before.anulado_en, "Esta entrega ya fue anulada.", 409);
+        exigir(
+          before.paquete.estado === "entregado",
+          "El paquete ya no corresponde a una entrega vigente.",
+          409,
+        );
+        let after;
+        if (accion === "anular") {
+          after = await tx.detalle_documento.update({
+            where: { id_detalle: before.id_detalle },
+            data: { anulado_en: await fechaOperacion(tx) },
+          });
+          await tx.paquete.update({
+            where: { id_paquete: before.id_paquete },
+            data: {
+              estado: "recibido",
+              fecha_entrega: null,
+              id_locker: null,
+              id_sucursal_actual: before.documento.id_sucursal,
+            },
+          });
+          await tx.$queryRaw`SELECT generar_recargos(CURRENT_TIMESTAMP, ${before.id_paquete})`;
+        } else {
+          after = await tx.detalle_documento.update({
+            where: { id_detalle: before.id_detalle },
+            data: {
+              ci_destinatario: texto(b.ci_destinatario, 30) || null,
+              nombre_destinatario: texto(b.nombre_destinatario, 150) || null,
+              telefono_destinatario: texto(b.telefono_destinatario, 30) || null,
+              observaciones: texto(b.observaciones, 2000),
+            },
+          });
+        }
+        await tx.auditoria_operacion.create({
+          data: {
+            entidad: "entrega",
+            id_registro: before.id_detalle,
+            accion,
+            motivo,
+            antes: jsonAuditoria(before),
+            despues: jsonAuditoria({
+              detalle: after,
+              paquete: await tx.paquete.findUniqueOrThrow({
+                where: { id_paquete: before.id_paquete },
+              }),
+            }),
+            id_empleado: s.id_persona,
+            id_sucursal: before.documento.id_sucursal,
+            fecha: await fechaOperacion(tx),
+          },
+        });
+        return { id: after.id_detalle };
+      }
+      if (recurso === "correcciones_pago") {
+        permitir(s, 1, 2);
+        camposCorreccion(b, ["pagador", "medio", "observaciones"]);
+        const accion = elegir(b.accion, ["corregir", "anular"]);
+        const motivo = texto(b.motivo, 2000, true);
+        const initial = await tx.movimiento.findUnique({
+          where: { id_movimiento: id(b.id) },
+        });
+        exigir(initial?.tipo === "entrada", "Cobro inexistente.", 404);
+        await paqueteVisible(tx, s, String(initial.id_paquete));
+        sucursal(s, String(initial.id_sucursal));
+        await tx.$queryRaw`SELECT id_paquete FROM paquete WHERE id_paquete=${initial.id_paquete} FOR UPDATE`;
+        const before = await tx.movimiento.findMany({
+          where: { id_operacion: initial.id_operacion, tipo: "entrada" },
+          orderBy: { id_movimiento: "asc" },
+        });
+        exigir(
+          before.length && before.every((m) => !m.anulado_en),
+          "El cobro ya fue anulado.",
+          409,
+        );
+        const paquete = await tx.paquete.findUniqueOrThrow({
+          where: { id_paquete: initial.id_paquete },
+        });
+        const ids = before.map((m) => m.id_movimiento);
+        if (accion === "anular") {
+          exigir(
+            paquete.estado !== "entregado",
+            "Anule primero la entrega antes de anular su cobro.",
+            409,
+          );
+          exigir(
+            !(await tx.movimiento.count({
+              where: {
+                id_paquete: paquete.id_paquete,
+                tipo: "salida",
+                anulado_en: null,
+              },
+            })),
+            "El paquete tiene una devolución registrada; requiere revisión administrativa.",
+            409,
+          );
+          if (before.some((m) => m.id_pago_anticipado)) {
+            await tx.pago_pendiente.upsert({
+              where: {
+                id_paquete_concepto_numero_periodo: {
+                  id_paquete: paquete.id_paquete,
+                  concepto: "almacenamiento",
+                  numero_periodo: 0,
+                },
+              },
+              create: {
+                id_paquete: paquete.id_paquete,
+                concepto: "almacenamiento",
+                numero_periodo: 0,
+                monto: paquete.importe_inicial,
+                generado_en: paquete.fecha_ingreso,
+                vence_en: paquete.fecha_limite,
+              },
+              update: {},
+            });
+          }
+          await tx.movimiento.updateMany({
+            where: { id_movimiento: { in: ids } },
+            data: {
+              anulado_en: await fechaOperacion(tx),
+              id_pago_pendiente: null,
+              id_pago_anticipado: null,
+            },
+          });
+        } else {
+          await tx.movimiento.updateMany({
+            where: { id_movimiento: { in: ids } },
+            data: {
+              pagador: elegir(b.pagador, ["cliente", "destinatario"]),
+              medio: elegir(b.medio, ["efectivo", "qr", "transferencia"]),
+              observaciones: texto(b.observaciones, 2000) || null,
+            },
+          });
+        }
+        const after = await tx.movimiento.findMany({
+          where: { id_movimiento: { in: ids } },
+          orderBy: { id_movimiento: "asc" },
+        });
+        await tx.auditoria_operacion.create({
+          data: {
+            entidad: "pago",
+            id_registro: before[0].id_movimiento,
+            accion,
+            motivo,
+            antes: jsonAuditoria({ movimientos: before, paquete }),
+            despues: jsonAuditoria(after),
+            id_empleado: s.id_persona,
+            id_sucursal: initial.id_sucursal,
+            fecha: await fechaOperacion(tx),
+          },
+        });
+        return { id: before[0].id_movimiento };
+      }
       if (recurso === "clientes") {
         permitir(s, 1, 2);
         if (method === "POST") {
@@ -617,7 +837,7 @@ export async function modificar(
         const config = await tx.configuracion.findUniqueOrThrow({
           where: { id: 1 },
         });
-        const fecha = new Date();
+        const fecha = await fechaOperacion(tx);
         const doc = await tx.documento.create({
           data: {
             tipo: "recepcion",
@@ -738,7 +958,7 @@ export async function modificar(
         permitir(s, 1, 2);
         exigir(method === "POST", "Método inválido.", 405);
         const branch = sucursal(s, b.id_sucursal);
-        const fecha = new Date();
+        const fecha = await fechaOperacion(tx);
         exigir(
           Array.isArray(b.paquetes) &&
             b.paquetes.length > 0 &&
@@ -863,7 +1083,7 @@ export async function modificar(
         });
       }
       if (recurso === "cobros" || recurso === "devoluciones") {
-        permitir(s, 1);
+        permitir(s, 1, 2);
         exigir(
           method === "POST",
           "Los movimientos conservan su historial.",

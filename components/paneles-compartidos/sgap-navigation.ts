@@ -32,9 +32,9 @@ const sections: Record<string, Section> = {
     label: "Entrega",
     icon: "imgSvg3.svg",
     group: "OPERACIÓN",
-    tabs: [],
+    tabs: ["Registrar entrega", "Documentos registrados", "Corregir entrega"],
     description:
-      "Verifica los paquetes y registra su entrega al destinatario.",
+      "Registra entregas, consulta documentos y corrige los datos del retiro.",
   },
   almacenes: {
     id: "almacenes",
@@ -65,15 +65,21 @@ const sections: Record<string, Section> = {
     label: "Pagos",
     icon: "imgSvg4.svg",
     group: "GESTIÓN",
-    tabs: ["Por cobrar", "Cobros", "Devoluciones", "Tarifas"],
-    description: "Consulta saldos y registra cobros y devoluciones completas.",
+    tabs: ["Registrar cobro", "Cobros realizados", "Corregir pagos", "Tarifas"],
+    description:
+      "Registra cobros, consulta el historial y corrige las operaciones de pago.",
   },
   usuarios: {
     id: "usuarios",
     label: "Usuarios",
     icon: "imgSvg5.svg",
     group: "GESTIÓN",
-    tabs: ["Nuevo usuario", "Usuarios registrados", "Actualizar usuario", "Cargos y accesos"],
+    tabs: [
+      "Nuevo usuario",
+      "Usuarios registrados",
+      "Actualizar usuario",
+      "Cargos y accesos",
+    ],
     description: "Administra clientes, personal y accesos al sistema.",
   },
   clientes: {
@@ -129,13 +135,23 @@ export function navigation(role: PanelRole): Section[] {
           "reportes",
         ]
       : role === "empleado"
-        ? ["general", "recepcion", "entregas", "almacenes", "traslados", "clientes"]
+        ? [
+            "general",
+            "recepcion",
+            "entregas",
+            "pagos",
+            "almacenes",
+            "traslados",
+            "clientes",
+          ]
         : role === "almacenes"
           ? ["general", "almacenes", "traslados", "clientes"]
           : ["general", "paquetes", "pagos", "notificaciones"];
 
   return ids.map((id) => {
     const item = { ...sections[id], tabs: [...sections[id].tabs] };
+
+    if (role === "empleado" && id === "pagos") item.group = "OPERACIÓN";
 
     if (role === "empleado" && id === "almacenes")
       item.tabs = ["Disponibilidad", "Ubicación de paquetes", "Por ubicar"];

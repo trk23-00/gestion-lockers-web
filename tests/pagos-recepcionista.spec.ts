@@ -1,7 +1,7 @@
 import { test, expect, type APIRequestContext } from "@playwright/test";
 import pg from "pg";
 
-test("el recepcionista cobra, entrega y devuelve únicamente en su sucursal", async ({
+test("el recepcionista cobra, entrega y corrige pagos únicamente en su sucursal", async ({
   playwright,
   browser,
 }) => {
@@ -139,10 +139,18 @@ test("el recepcionista cobra, entrega y devuelve únicamente en su sucursal", as
     });
     contexts.push(context);
     const page = await context.newPage();
-    await page.goto("/paneles/empleado?seccion=recepcion&vista=Entregas");
+    await page.goto("/paneles/empleado?seccion=entregas");
     await expect(
       page.locator("aside").getByRole("button", { name: "Pagos", exact: true }),
     ).toBeVisible();
+    const sidebarButtons = await page
+      .locator("aside nav > div > button")
+      .allTextContents();
+    const entregaIndex = sidebarButtons.findIndex(
+      (label) => label.trim() === "Entrega",
+    );
+    expect(entregaIndex).toBeGreaterThanOrEqual(0);
+    expect(sidebarButtons[entregaIndex + 1].trim()).toBe("Pagos");
     await page
       .getByRole("textbox", { name: "Buscar", exact: true })
       .fill(due.codigo);
@@ -215,7 +223,10 @@ test("el recepcionista cobra, entrega y devuelve únicamente en su sucursal", as
       .locator("aside")
       .getByRole("button", { name: "Pagos", exact: true })
       .click();
-    await page.getByRole("tab", { name: "Tarifas", exact: true }).click();
+    await page
+      .locator("#submenu-pagos")
+      .getByRole("button", { name: "Tarifas", exact: true })
+      .click();
     await expect(
       page.getByRole("heading", {
         name: "Tarifas de almacenamiento",
@@ -225,27 +236,34 @@ test("el recepcionista cobra, entrega y devuelve únicamente en su sucursal", as
     await expect(
       page.getByRole("button", { name: "Editar tarifas", exact: true }),
     ).toHaveCount(0);
-    await page.getByRole("tab", { name: "Devoluciones", exact: true }).click();
+    await page
+      .locator("#submenu-pagos")
+      .getByRole("button", { name: "Corregir pagos", exact: true })
+      .click();
     await page
       .getByRole("textbox", { name: "Buscar", exact: true })
       .fill(refund.codigo);
     await page
       .getByRole("row")
       .filter({ hasText: refund.codigo })
-      .getByRole("button", { name: "Devolver total", exact: true })
+      .getByRole("button", { name: "Corregir", exact: true })
       .click();
     await page
       .getByRole("dialog")
-      .getByLabel("Motivo de devolución")
-      .fill("Devolución total registrada por recepción");
+      .getByLabel("Operación")
+      .selectOption("anular");
     await page
       .getByRole("dialog")
-      .getByRole("button", { name: "Guardar", exact: true })
+      .getByLabel("Motivo de la corrección o anulación")
+      .fill("Cobro registrado por error en recepción");
+    await page
+      .getByRole("dialog")
+      .getByRole("button", { name: "Confirmar anulación", exact: true })
       .click();
     await expect(page.getByRole("dialog")).toHaveCount(0);
     await expect(
       page.getByRole("row").filter({ hasText: refund.codigo }),
-    ).toContainText("Devuelto:");
+    ).toContainText("Anulado");
     await post(
       recep,
       "devoluciones",
@@ -287,7 +305,11 @@ test("el recepcionista cobra, entrega y devuelve únicamente en su sucursal", as
         (m: { id_paquete: string }) => m.id_paquete === moved.id_paquete,
       ).paquete.codigo,
     ).toBe(moved.codigo);
-    await page.getByRole("tab", { name: "Cobros", exact: true }).click();
+    await page.reload();
+    await page
+      .locator("#submenu-pagos")
+      .getByRole("button", { name: "Cobros realizados", exact: true })
+      .click();
     await page
       .getByRole("textbox", { name: "Buscar", exact: true })
       .fill(moved.codigo);
@@ -313,7 +335,7 @@ test("el recepcionista cobra, entrega y devuelve únicamente en su sucursal", as
     const dailyTotal = (
       await db.query(
         `SELECT COALESCE(SUM(monto), 0) AS total FROM movimiento
-       WHERE tipo='entrada' AND id_sucursal=$1
+       WHERE tipo='entrada' AND anulado_en IS NULL AND id_sucursal=$1
          AND (fecha AT TIME ZONE 'America/La_Paz')::date =
              (CURRENT_TIMESTAMP AT TIME ZONE 'America/La_Paz')::date`,
         [central],

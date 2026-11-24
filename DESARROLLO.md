@@ -115,11 +115,24 @@ El administrador puede habilitar una cuenta para una ficha de cliente existente 
 
 ## Recorrido mínimo para comprobar la instalación
 
+### Entregas y pagos con correcciones
+
+Después de actualizar el repositorio, ejecutar `npm run db:migrate` y `npx prisma generate` antes de iniciar la web. La migración `202611240001_correcciones_entregas_pagos` conserva los registros existentes y añade el historial de correcciones.
+
+- **Entrega:** Registrar entrega, Documentos registrados y Corregir entrega. Las listas utilizan la búsqueda y paginación de diez registros. Solo se corrigen nombre, CI, teléfono y observaciones del retiro; se conservan código, contenido, peso, cliente y datos de recepción. Anular conserva el documento y devuelve el paquete a Por ubicar en la sucursal de entrega, sin recuperar un locker que podría estar ocupado.
+- **Pagos:** Registrar cobro, Cobros realizados y Corregir pagos; se mantiene Tarifas. El resumen diario aparece en Cobros realizados. El cliente conserva Pendientes y Realizados, sin escritura de caja.
+- **Corregir pagos:** permite cambiar pagador, medio y observaciones. Anular un registro incorrecto reabre el cargo pendiente y descuenta el cobro de la caja del día y mes originales; no es una devolución de dinero. Se conserva el movimiento marcado como anulado. Si el paquete fue entregado, primero debe anularse la entrega. Los casos con una devolución previa se rechazan para revisión administrativa.
+- Las correcciones y anulaciones requieren motivo y registran responsable, fecha y valores anteriores. Se aplican completas a los cargos de un mismo cobro y respetan el alcance de sucursal del recepcionista. Los datos de recepción, importes, tarifas y fechas originales no son editables desde estas operaciones.
+
+Prueba específica con DB temporal: `npm test -- tests/correcciones-operaciones.spec.ts`. Las suites anteriores que dependen de la navegación antigua no acreditan estos nuevos recorridos.
+
+### Recorrido operativo
+
 1. Entre como administrador o recepcionista y cree una ficha de cliente.
 2. Registre una recepción con varios paquetes: para probar el panel del cliente, seleccione `Cliente Demo` como cuenta destinataria en uno de ellos. Los destinatarios sin cuenta siguen guardándose como datos generales del detalle.
 3. Entre como almacenero y asigne lockers disponibles del tamaño adecuado. En Traslados puede preparar/despachar hacia Norte.
 4. Si el paquete tiene pago pendiente, entre como administrador o recepcionista y registre el cobro en Pagos o con Cobrar para entregar, después de recibir el dinero. El recepcionista opera únicamente en su sucursal y consulta las tarifas; su edición corresponde al administrador.
-5. Entregue el paquete desde Recepción y entregas. El locker queda libre. Revise Documentos y Reportes/Caja.
+5. Entregue el paquete desde Entrega / Registrar entrega. El locker queda libre. Revise Entrega / Documentos registrados y Reportes/Caja.
 6. Entre como cliente para consultar exclusivamente sus envíos, pagos y avisos registrados.
 
 No se requiere una pasarela para registrar efectivo/QR/transferencia: el prototipo registra el movimiento después del pago externo. No cobra tarjetas ni procesa dinero por Internet.

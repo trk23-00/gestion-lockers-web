@@ -8,6 +8,13 @@ import { navigation } from "./sgap-navigation";
 import Workspace from "./Workspace";
 import styles from "./UserDashboard.module.css";
 
+const submenuSections = ["recepcion", "entregas", "pagos", "usuarios"];
+const legacyPaymentViews: Record<string, string> = {
+  "Por cobrar": "Registrar cobro",
+  Cobros: "Cobros realizados",
+  Devoluciones: "Corregir pagos",
+};
+
 export default function UserDashboard({ role }: { role: PanelRole }) {
   const router = useRouter();
   const modules = navigation(role);
@@ -19,15 +26,16 @@ export default function UserDashboard({ role }: { role: PanelRole }) {
     [tab, setTab] = useState(""),
     [branch, setBranch] = useState(""),
     [mobileOpen, setMobileOpen] = useState(false),
-    [receptionExpanded, setReceptionExpanded] = useState(false),
-    [usersExpanded, setUsersExpanded] = useState(false);
+    [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const current = modules.find((m) => m.id === section);
   const title =
     section === "cuenta"
       ? "Mi cuenta"
-      : section === "recepcion" || section === "usuarios"
-        ? tab || current?.label || (section === "usuarios" ? "Usuarios" : "Recepción")
-        : current?.label || "Panel general";
+      : ["recepcion", "entregas", "pagos"].includes(section)
+        ? `${current?.label || ""} / ${tab || current?.tabs[0] || ""}`
+        : section === "usuarios"
+          ? tab || "Usuarios"
+          : current?.label || "Panel general";
   const refresh = useCallback(async () => {
     const res = await fetch("/api/sgap/datos", { cache: "no-store" });
     const result = await res.json();
@@ -60,8 +68,8 @@ export default function UserDashboard({ role }: { role: PanelRole }) {
   }, [refresh]);
   useEffect(() => {
     queueMicrotask(() => {
-      if (section === "recepcion") setReceptionExpanded(true);
-      if (section === "usuarios") setUsersExpanded(true);
+      if (submenuSections.includes(section))
+        setExpanded((value) => ({ ...value, [section]: true }));
     });
   }, [section]);
   useEffect(() => {
@@ -81,7 +89,9 @@ export default function UserDashboard({ role }: { role: PanelRole }) {
             : id === "usuarios" &&
                 ["Personal", "Clientes"].includes(requestedTab)
               ? "Usuarios registrados"
-              : requestedTab;
+              : id === "pagos"
+                ? legacyPaymentViews[requestedTab] || requestedTab
+                : requestedTab;
       const mod = navigation(role).find((m) => m.id === id);
       setSection(mod ? id : id === "cuenta" ? "cuenta" : "general");
       setTab(mod?.tabs.includes(wanted) ? wanted : mod?.tabs[0] || "");
@@ -188,31 +198,43 @@ export default function UserDashboard({ role }: { role: PanelRole }) {
               {(i === 0 || modules[i - 1].group !== m.group) && (
                 <p className={styles.navGroup}>{m.group}</p>
               )}
-              {m.id === "recepcion" || m.id === "usuarios" ? (
+              {submenuSections.includes(m.id) ? (
                 <>
                   <button
                     className={`${styles.navItem} ${section === m.id ? styles.active : ""}`}
                     onClick={() =>
-                      m.id === "recepcion"
-                        ? setReceptionExpanded((expanded) => !expanded)
-                        : setUsersExpanded((expanded) => !expanded)
+                      setExpanded((value) => ({
+                        ...value,
+                        [m.id]: !value[m.id],
+                      }))
                     }
-                    aria-expanded={m.id === "recepcion" ? receptionExpanded : usersExpanded}
+                    aria-expanded={!!expanded[m.id]}
                     aria-controls={`submenu-${m.id}`}
                     aria-current={section === m.id ? "page" : undefined}
                   >
-                    <Image src={`/figma/${m.icon}`} alt="" width={20} height={20} />
+                    <Image
+                      src={`/figma/${m.icon}`}
+                      alt=""
+                      width={20}
+                      height={20}
+                    />
                     <span className={styles.navItemLabel}>{m.label}</span>
                     <svg
-                      className={`${styles.navChevron} ${(m.id === "recepcion" ? receptionExpanded : usersExpanded) ? styles.chevronOpen : ""}`}
+                      className={`${styles.navChevron} ${expanded[m.id] ? styles.chevronOpen : ""}`}
                       viewBox="0 0 16 16"
                       fill="none"
                       aria-hidden="true"
                     >
-                      <path d="m3.5 6 4.5 4 4.5-4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+                      <path
+                        d="m3.5 6 4.5 4 4.5-4"
+                        stroke="currentColor"
+                        strokeWidth="1.7"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
                     </svg>
                   </button>
-                  {(m.id === "recepcion" ? receptionExpanded : usersExpanded) && (
+                  {expanded[m.id] && (
                     <div className={styles.submenu} id={`submenu-${m.id}`}>
                       {m.tabs.map((item) => {
                         const active = section === m.id && tab === item;
@@ -236,7 +258,12 @@ export default function UserDashboard({ role }: { role: PanelRole }) {
                   onClick={() => navigate(m.id)}
                   aria-current={section === m.id ? "page" : undefined}
                 >
-                  <Image src={`/figma/${m.icon}`} alt="" width={20} height={20} />
+                  <Image
+                    src={`/figma/${m.icon}`}
+                    alt=""
+                    width={20}
+                    height={20}
+                  />
                   {m.label}
                 </button>
               )}
@@ -332,7 +359,9 @@ export default function UserDashboard({ role }: { role: PanelRole }) {
               </small>
             </div>
           </div>
-          {current && current.tabs.length > 0 && section !== "recepcion" && section !== "usuarios" ? (
+          {current &&
+          current.tabs.length > 0 &&
+          !submenuSections.includes(section) ? (
             <div
               className={styles.tabs}
               role="tablist"

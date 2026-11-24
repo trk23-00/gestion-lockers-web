@@ -19,7 +19,9 @@ export default function DailyCollections({
   const collections = movements
     .filter(
       (m) =>
-        m.tipo === "entrada" && dayFormat.format(new Date(m.fecha)) === today,
+        m.tipo === "entrada" &&
+        !m.anulado_en &&
+        dayFormat.format(new Date(m.fecha)) === today,
     )
     .sort((a, b) => Date.parse(b.fecha) - Date.parse(a.fecha));
   const totalCents = collections.reduce(

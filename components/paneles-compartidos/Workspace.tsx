@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import DailyCollections from "./DailyCollections";
 import {
   useEffect,
   useRef,
@@ -19,6 +20,8 @@ import {
   type Transfer,
   type Alert,
   type Document,
+  type Movement,
+  type OperationAudit,
   debt,
   date,
   money,
@@ -282,6 +285,12 @@ function FormDialog({
     change: (v: string | boolean) => void,
     prefix = "",
   ) {
+    if (
+      form.resource.startsWith("correcciones_") &&
+      draft.accion === "anular" &&
+      !["accion", "motivo"].includes(field.name)
+    )
+      return null;
     const common = {
       id: `${prefix}${field.name}`,
       name: `${prefix}${field.name}`,
@@ -579,10 +588,136 @@ function FormDialog({
               ? "Guardando…"
               : form.method === "DELETE"
                 ? "Eliminar registro"
-                : "Guardar"}
+                : draft.accion === "anular"
+                  ? "Confirmar anulación"
+                  : "Guardar"}
           </button>
         </div>
       </form>
+    </dialog>
+  );
+}
+
+type DeliveryRecord = Document["detalle_documento"][number] & {
+  documento: Document;
+};
+type CollectionRecord = Movement & { total: number; movimientos: Movement[] };
+type OperationView = {
+  title: string;
+  fields: [string, string][];
+  history: OperationAudit[];
+};
+
+function DeliveryRecords({
+  rows,
+  correction,
+  onDetails,
+  onCorrect,
+}: {
+  rows: DeliveryRecord[];
+  correction: boolean;
+  onDetails: (row: DeliveryRecord) => void;
+  onCorrect: (row: DeliveryRecord) => void;
+}) {
+  return (
+    <Card
+      title={correction ? "Entregas para corregir" : "Entregas registradas"}
+    >
+      <Table
+        rows={rows}
+        rowKey={(r) => r.id_detalle}
+        columns={[
+          { title: "Paquete", value: (r) => r.paquete.codigo },
+          {
+            title: "Documento",
+            value: (r) => `EN-${r.documento.id_documento}`,
+          },
+          { title: "Fecha de entrega", value: (r) => date(r.documento.fecha) },
+          {
+            title: "Quien recoge",
+            value: (r) =>
+              r.nombre_destinatario || r.ci_destinatario || "Sin registrar",
+          },
+          {
+            title: "Estado",
+            value: (r) => (r.anulado_en ? "Anulada" : "Registrada"),
+          },
+        ]}
+        actions={(row) => (
+          <>
+            <button
+              className={styles.textButton}
+              onClick={() => onDetails(row)}
+            >
+              Ver detalles
+            </button>
+            {correction && (
+              <button
+                className={styles.textButton}
+                disabled={!!row.anulado_en}
+                onClick={() => onCorrect(row)}
+              >
+                Corregir
+              </button>
+            )}
+          </>
+        )}
+      />
+    </Card>
+  );
+}
+
+function OperationDetailDialog({
+  view,
+  close,
+}: {
+  view: OperationView;
+  close: () => void;
+}) {
+  const ref = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const dialog = ref.current;
+    dialog?.showModal();
+    return () => dialog?.close();
+  }, []);
+  return (
+    <dialog
+      ref={ref}
+      className={styles.dialog}
+      onCancel={close}
+      aria-labelledby="operation-detail-title"
+    >
+      <div className={styles.dialogHeader}>
+        <h2 id="operation-detail-title">{view.title}</h2>
+      </div>
+      <dl className={styles.detailGrid}>
+        {view.fields.map(([label, value]) => (
+          <div key={label}>
+            <dt>{label}</dt>
+            <dd>{value || "Sin registrar"}</dd>
+          </div>
+        ))}
+      </dl>
+      <h3>Historial de correcciones</h3>
+      {!view.history.length && (
+        <p className={styles.muted}>
+          No se registraron correcciones ni anulaciones.
+        </p>
+      )}
+      {view.history.map((a, i) => (
+        <p key={i}>
+          <strong>{a.accion === "anular" ? "Anulación" : "Corrección"}</strong>{" "}
+          · {date(a.fecha)} ·{" "}
+          {a.empleado?.persona.nombre || "Personal autorizado"}
+          <br />
+          {a.motivo}
+        </p>
+      ))}
+      <div className={styles.dialogFooter}>
+        <button className={styles.primary} onClick={close}>
+          Cerrar
+        </button>
+      </div>
     </dialog>
   );
 }
@@ -598,6 +733,9 @@ export default function Workspace({
   const [form, setForm] = useState<FormState | null>(null);
   const [detail, setDetail] = useState<Package | Document | null>(null);
   const [qr, setQr] = useState("");
+  const [operationDetail, setOperationDetail] = useState<OperationView | null>(
+    null,
+  );
   const nivel = data.usuario.nivel,
     admin = nivel === 1,
     staffReception = nivel === 1 || nivel === 2,
@@ -623,7 +761,151 @@ export default function Workspace({
   const branchName = (id: string) =>
     data.sucursales.find((b) => b.id_sucursal === id)?.nombre || "—";
   const code = (id: string) =>
-    data.paquetes.find((p) => p.id_paquete === id)?.codigo || `Paquete ${id}`;
+    data.paquetes.find((p) => p.id_paquete === id)?.codigo ||
+    data.movimientos.find((m) => m.id_paquete === id)?.paquete?.codigo ||
+    `Paquete ${id}`;
+  const deliveryRecords: DeliveryRecord[] = data.documentos
+    .filter(
+      (d) => d.tipo === "entrega" && (!branch || d.id_sucursal === branch),
+    )
+    .flatMap((documento) =>
+      documento.detalle_documento.map((r) => ({ ...r, documento })),
+    )
+    .sort(
+      (a, b) =>
+        Date.parse(b.documento.fecha) - Date.parse(a.documento.fecha) ||
+        Number(BigInt(b.id_detalle) - BigInt(a.id_detalle)),
+    );
+  const collectionGroups = new Map<string, Movement[]>();
+  for (const m of data.movimientos.filter(
+    (m) => m.tipo === "entrada" && (!branch || m.id_sucursal === branch),
+  )) {
+    const key = m.id_operacion || m.id_movimiento;
+    collectionGroups.set(key, [...(collectionGroups.get(key) || []), m]);
+  }
+  const collectionRecords: CollectionRecord[] = [
+    ...collectionGroups.values(),
+  ].map((members) => {
+    members.sort((a, b) =>
+      Number(BigInt(a.id_movimiento) - BigInt(b.id_movimiento)),
+    );
+    return {
+      ...members[0],
+      movimientos: members,
+      total:
+        members.reduce((sum, m) => sum + Math.round(Number(m.monto) * 100), 0) /
+        100,
+    };
+  });
+  function deliveryDetails(r: DeliveryRecord) {
+    setOperationDetail({
+      title: "Detalle de la entrega",
+      fields: [
+        ["Paquete", r.paquete.codigo],
+        ["Documento", `EN-${r.documento.id_documento}`],
+        ["Fecha", date(r.documento.fecha)],
+        ["Sucursal", branchName(r.documento.id_sucursal)],
+        [
+          "Registrado por",
+          r.documento.empleado?.persona.nombre || r.documento.id_empleado,
+        ],
+        ["Estado", r.anulado_en ? "Anulada" : "Registrada"],
+        ["Quien recoge", r.nombre_destinatario || ""],
+        ["CI", r.ci_destinatario || ""],
+        ["Teléfono", r.telefono_destinatario || ""],
+        [
+          "Observaciones de entrega",
+          r.observaciones ?? r.documento.observaciones ?? "",
+        ],
+      ],
+      history: (data.auditorias || []).filter(
+        (a) => a.entidad === "entrega" && a.id_registro === r.id_detalle,
+      ),
+    });
+  }
+  function correctDelivery(r: DeliveryRecord) {
+    open(
+      "Corregir entrega",
+      "correcciones_entrega",
+      [
+        select("accion", "Operación", [
+          { value: "corregir", label: "Corregir datos" },
+          { value: "anular", label: "Anular entrega" },
+        ]),
+        text("nombre_destinatario", "Nombre de quien recoge"),
+        text("ci_destinatario", "CI de quien recoge"),
+        text("telefono_destinatario", "Teléfono de quien recoge"),
+        text(
+          "observaciones",
+          "Observaciones del paquete al entregar",
+          false,
+          "textarea",
+        ),
+        text("motivo", "Motivo de la corrección o anulación", true, "textarea"),
+      ],
+      {
+        id: r.id_detalle,
+        accion: "corregir",
+        nombre_destinatario: r.nombre_destinatario || "",
+        ci_destinatario: r.ci_destinatario || "",
+        telefono_destinatario: r.telefono_destinatario || "",
+        observaciones: r.observaciones ?? r.documento.observaciones ?? "",
+        motivo: "",
+      },
+      "PATCH",
+      {
+        help: `${r.paquete.codigo} · Los datos de recepción se conservan. Anule únicamente si el paquete continúa bajo custodia de la empresa; quedará por ubicar en la sucursal de entrega.`,
+      },
+    );
+  }
+  function collectionDetails(r: CollectionRecord) {
+    setOperationDetail({
+      title: "Detalle del cobro",
+      fields: [
+        ["Paquete", code(r.id_paquete)],
+        ["Cobro", `CB-${r.id_movimiento}`],
+        ["Fecha", date(r.fecha)],
+        ["Sucursal", branchName(r.id_sucursal)],
+        ["Importe", money(r.total)],
+        ["Quién paga", r.pagador === "cliente" ? "Cliente" : "Destinatario"],
+        ["Medio", r.medio],
+        ["Registrado por", r.empleado?.persona.nombre || "Personal autorizado"],
+        ["Estado", r.anulado_en ? "Anulado" : "Registrado"],
+        ["Observaciones", r.observaciones || ""],
+      ],
+      history: (data.auditorias || []).filter(
+        (a) => a.entidad === "pago" && a.id_registro === r.id_movimiento,
+      ),
+    });
+  }
+  function correctCollection(r: CollectionRecord) {
+    open(
+      "Corregir pago",
+      "correcciones_pago",
+      [
+        select("accion", "Operación", [
+          { value: "corregir", label: "Corregir datos" },
+          { value: "anular", label: "Anular cobro" },
+        ]),
+        select("pagador", "Quién paga", payers),
+        select("medio", "Medio de pago", methods),
+        text("observaciones", "Observaciones del pago", false, "textarea"),
+        text("motivo", "Motivo de la corrección o anulación", true, "textarea"),
+      ],
+      {
+        id: r.id_movimiento,
+        accion: "corregir",
+        pagador: r.pagador,
+        medio: r.medio,
+        observaciones: r.observaciones || "",
+        motivo: "",
+      },
+      "PATCH",
+      {
+        help: `${code(r.id_paquete)} · ${money(r.total)}. Se conservan paquete, tarifa e importe. Anular corrige un registro incorrecto, no representa una devolución de dinero y reabre el saldo. Si el paquete fue entregado, primero anule la entrega.`,
+      },
+    );
+  }
   const clientName = (p: Package) =>
     data.clientes.find(
       (c) =>
@@ -738,7 +1020,7 @@ export default function Workspace({
       refund ? "Devolución monetaria total" : "Registrar cobro completo",
       refund ? "devoluciones" : "cobros",
       [
-        select("id_sucursal", "Caja / sucursal", allBranches),
+        select("id_sucursal", "Caja / sucursal", branchOptions),
         select(
           "pagador",
           refund ? "Receptor del dinero" : "Quién paga",
@@ -798,9 +1080,7 @@ export default function Workspace({
         text("correo", "Correo", false, "email"),
         text("telefono", "Teléfono"),
         text("observaciones", "Observaciones", false, "textarea"),
-        ...(admin
-          ? [text("activo", "Cliente activo", false, "checkbox")]
-          : []),
+        ...(admin ? [text("activo", "Cliente activo", false, "checkbox")] : []),
       ],
       { id: c.id_cliente, ...c.persona, observaciones: c.observaciones },
       "PATCH",
@@ -861,12 +1141,7 @@ export default function Workspace({
         ]),
         select("id_sucursal", "Sucursal", allBranches),
         {
-          ...text(
-            "password",
-            "Nueva contraseña (opcional)",
-            false,
-            "password",
-          ),
+          ...text("password", "Nueva contraseña (opcional)", false, "password"),
           help: "Al menos 8 caracteres.",
         },
         text("activo", "Cuenta activa", false, "checkbox"),
@@ -1400,7 +1675,22 @@ export default function Workspace({
       );
     }
   } else if (section === "entregas") {
-    content = (
+    content = ["Documentos registrados", "Corregir entrega"].includes(tab) ? (
+      <>
+        <div className={styles.sectionNotice}>
+          {tab === "Corregir entrega"
+            ? "Corrige los datos del retiro o anula una entrega registrada por error. La recepción original se conserva."
+            : "Consulta las últimas entregas y los detalles de cada paquete. Se muestran diez registros por página."}
+        </div>
+        <DeliveryRecords
+          key={tab}
+          rows={deliveryRecords}
+          correction={tab === "Corregir entrega"}
+          onDetails={deliveryDetails}
+          onCorrect={correctDelivery}
+        />
+      </>
+    ) : (
       <>
         <div className={styles.sectionNotice}>
           Verifica el código, la sucursal y el saldo completo antes de entregar.
@@ -1420,10 +1710,9 @@ export default function Workspace({
             (p) => (
               <button
                 className={styles.textButton}
-                disabled={debt(p) > 0}
-                onClick={() => delivery(p)}
+                onClick={() => (debt(p) > 0 ? payment(p) : delivery(p))}
               >
-                {debt(p) > 0 ? "Saldo pendiente" : "Entregar"}
+                {debt(p) > 0 ? "Cobrar para entregar" : "Entregar"}
               </button>
             ),
           )}
@@ -1638,60 +1927,110 @@ export default function Workspace({
       </Card>
     );
   } else if (section === "pagos") {
-    if (tab === "Tarifas")
+    if (tab === "Corregir pagos")
+      content = (
+        <Card title="Pagos registrados">
+          <p className={styles.muted}>
+            Corrige el pagador, el medio y las observaciones, o anula un
+            registro incorrecto. Cada cobro se corrige completo, incluidos sus
+            recargos.
+          </p>
+          <Table
+            rows={collectionRecords}
+            rowKey={(r) => r.id_movimiento}
+            columns={[
+              { title: "Cobro", value: (r) => `CB-${r.id_movimiento}` },
+              { title: "Paquete", value: (r) => code(r.id_paquete) },
+              { title: "Fecha", value: (r) => date(r.fecha) },
+              { title: "Importe", value: (r) => money(r.total) },
+              { title: "Pagador", value: (r) => r.pagador },
+              { title: "Medio", value: (r) => r.medio },
+              {
+                title: "Estado",
+                value: (r) => (r.anulado_en ? "Anulado" : "Registrado"),
+              },
+            ]}
+            actions={(r) => (
+              <>
+                <button
+                  className={styles.textButton}
+                  onClick={() => collectionDetails(r)}
+                >
+                  Ver detalles
+                </button>
+                {staffReception && (
+                  <button
+                    className={styles.textButton}
+                    disabled={
+                      !!r.anulado_en ||
+                      !data.paquetes.some((p) => p.id_paquete === r.id_paquete)
+                    }
+                    onClick={() => correctCollection(r)}
+                  >
+                    Corregir
+                  </button>
+                )}
+              </>
+            )}
+          />
+        </Card>
+      );
+    else if (tab === "Tarifas")
       content = (
         <Card
           title="Tarifas de almacenamiento"
           action={
-            <button
-              className={styles.primary}
-              onClick={() =>
-                open(
-                  "Editar tarifas",
-                  "tarifas",
-                  [
+            admin ? (
+              <button
+                className={styles.primary}
+                onClick={() =>
+                  open(
+                    "Editar tarifas",
+                    "tarifas",
+                    [
+                      {
+                        ...text(
+                          "importe_inicial",
+                          "Importe inicial (Bs)",
+                          true,
+                          "number",
+                        ),
+                        min: "0.01",
+                        step: "0.01",
+                      },
+                      {
+                        ...text(
+                          "recargo_semanal",
+                          "Recargo por semana iniciada (Bs)",
+                          true,
+                          "number",
+                        ),
+                        min: "0.01",
+                        step: "0.01",
+                      },
+                      {
+                        ...text(
+                          "dias_iniciales",
+                          "Días iniciales",
+                          true,
+                          "number",
+                        ),
+                        min: "1",
+                        max: "365",
+                        step: "1",
+                      },
+                    ],
+                    data.configuracion,
+                    "PATCH",
                     {
-                      ...text(
-                        "importe_inicial",
-                        "Importe inicial (Bs)",
-                        true,
-                        "number",
-                      ),
-                      min: "0.01",
-                      step: "0.01",
+                      help: "Los nuevos valores se aplican únicamente a futuras recepciones. Cada paquete conserva sus tarifas originales.",
                     },
-                    {
-                      ...text(
-                        "recargo_semanal",
-                        "Recargo por semana iniciada (Bs)",
-                        true,
-                        "number",
-                      ),
-                      min: "0.01",
-                      step: "0.01",
-                    },
-                    {
-                      ...text(
-                        "dias_iniciales",
-                        "Días iniciales",
-                        true,
-                        "number",
-                      ),
-                      min: "1",
-                      max: "365",
-                      step: "1",
-                    },
-                  ],
-                  data.configuracion,
-                  "PATCH",
-                  {
-                    help: "Los nuevos valores se aplican únicamente a futuras recepciones. Cada paquete conserva sus tarifas originales.",
-                  },
-                )
-              }
-            >
-              Editar tarifas
-            </button>
+                  )
+                }
+              >
+                Editar tarifas
+              </button>
+            ) : undefined
           }
         >
           <dl className={styles.detailGrid}>
@@ -1714,17 +2053,17 @@ export default function Workspace({
           </p>
         </Card>
       );
-    else if (["Cobros", "Realizados"].includes(tab))
+    else if (["Cobros realizados", "Realizados"].includes(tab))
       content = (
         <Card title="Historial de movimientos">
           <Table
             rows={data.movimientos.filter(
               (m) =>
                 (!branch || m.id_sucursal === branch) &&
-                (tab !== "Cobros" || m.tipo === "entrada"),
+                (tab !== "Cobros realizados" || m.tipo === "entrada"),
             )}
             rowKey={(m) => m.id_movimiento}
-            exportName={admin ? "movimientos" : undefined}
+            exportName={staffReception ? "movimientos" : undefined}
             columns={[
               { title: "Movimiento", value: (m) => `MV-${m.id_movimiento}` },
               { title: "Paquete", value: (m) => code(m.id_paquete) },
@@ -1733,47 +2072,28 @@ export default function Workspace({
               { title: "Importe", value: (m) => money(m.monto) },
               { title: "Pagador / receptor", value: (m) => m.pagador },
               { title: "Medio", value: (m) => m.medio },
+              {
+                title: "Estado",
+                value: (m) => (m.anulado_en ? "Anulado" : "Registrado"),
+              },
             ]}
           />
         </Card>
       );
     else
       content = (
-        <Card
-          title={
-            tab === "Devoluciones"
-              ? "Devoluciones monetarias"
-              : "Pagos pendientes"
-          }
-        >
+        <Card title="Pagos pendientes">
           {packageTable(
-            packages.filter((p) =>
-              tab === "Devoluciones"
-                ? !!p.pago_anticipado ||
-                  p.pago_pendiente.some((x) => x.movimiento)
-                : debt(p) > 0,
-            ),
-            admin
-              ? (p) =>
-                  tab === "Devoluciones" ? (
-                    p.devolucion ? (
-                      <span>Devuelto: {money(p.devolucion.monto)}</span>
-                    ) : (
-                      <button
-                        className={styles.textButton}
-                        onClick={() => payment(p, true)}
-                      >
-                        Devolver total
-                      </button>
-                    )
-                  ) : (
-                    <button
-                      className={styles.textButton}
-                      onClick={() => payment(p)}
-                    >
-                      Cobrar {money(debt(p))}
-                    </button>
-                  )
+            packages.filter((p) => debt(p) > 0),
+            staffReception
+              ? (p) => (
+                  <button
+                    className={styles.textButton}
+                    onClick={() => payment(p)}
+                  >
+                    Cobrar {money(debt(p))}
+                  </button>
+                )
               : undefined,
           )}
         </Card>
@@ -1794,7 +2114,7 @@ export default function Workspace({
                 cargo: "Recepcionista",
                 alcance: "Su sucursal",
                 tareas:
-                  "Registrar recepción y entrega; crear y editar fichas de clientes; consultar lockers y traslados",
+                  "Registrar recepción, cobros completos y entregas; corregir o anular entregas y cobros de su sucursal; crear y editar fichas de clientes; consultar lockers y traslados",
               },
               {
                 cargo: "Almacenero",
@@ -1860,7 +2180,10 @@ export default function Workspace({
             </p>
             <Table
               rows={data.clientes.filter(
-                (c) => !c.persona.usuario && c.persona.activo && Boolean(c.persona.ci),
+                (c) =>
+                  !c.persona.usuario &&
+                  c.persona.activo &&
+                  Boolean(c.persona.ci),
               )}
               rowKey={(c) => c.id_cliente}
               columns={[
@@ -1918,7 +2241,8 @@ export default function Workspace({
                 { title: "Correo", value: (c) => c.persona.correo || "—" },
                 {
                   title: "Acceso al sistema",
-                  value: (c) => (c.persona.usuario ? "Con cuenta" : "Sin cuenta"),
+                  value: (c) =>
+                    c.persona.usuario ? "Con cuenta" : "Sin cuenta",
                 },
                 {
                   title: "Estado",
@@ -1972,7 +2296,8 @@ export default function Workspace({
                 { title: "Correo", value: (c) => c.persona.correo || "—" },
                 {
                   title: "Acceso",
-                  value: (c) => (c.persona.usuario ? "Con cuenta" : "Sin cuenta"),
+                  value: (c) =>
+                    c.persona.usuario ? "Con cuenta" : "Sin cuenta",
                 },
                 {
                   title: "Estado",
@@ -1991,7 +2316,8 @@ export default function Workspace({
           </Card>
           <p className={styles.muted}>
             Las cuentas y fichas no se eliminan. Para retirar el acceso de un
-            usuario, utilice la opción de desactivación del formulario de edición.
+            usuario, utilice la opción de desactivación del formulario de
+            edición.
           </p>
         </>
       );
@@ -2335,7 +2661,32 @@ export default function Workspace({
     );
   return (
     <>
+      {section === "pagos" &&
+        ["Cobros realizados", "Realizados"].includes(tab) && (
+          <Card title="Cobros de hoy">
+            <DailyCollections
+              movements={data.movimientos.filter(
+                (m) => !branch || m.id_sucursal === branch,
+              )}
+              scope={
+                client
+                  ? "Cobros de mis paquetes"
+                  : branch
+                    ? `Sucursal ${branchName(branch)}`
+                    : admin
+                      ? "Todas las sucursales"
+                      : "Mi sucursal"
+              }
+            />
+          </Card>
+        )}
       {content}
+      {operationDetail && (
+        <OperationDetailDialog
+          view={operationDetail}
+          close={() => setOperationDetail(null)}
+        />
+      )}
       {form && (
         <FormDialog
           key={`${form.resource}-${form.title}`}
@@ -2451,7 +2802,10 @@ function DetailDialog({
                 <strong>
                   Pago anticipado · {money(detail.pago_anticipado.monto)}
                 </strong>
-                <small>{date(detail.pago_anticipado.fecha)} · Pagado</small>
+                <small>
+                  {date(detail.pago_anticipado.fecha)} ·{" "}
+                  {detail.pago_anticipado.movimiento ? "Pagado" : "Anulado"}
+                </small>
               </li>
             )}
             {detail.pago_pendiente.map((p) => (

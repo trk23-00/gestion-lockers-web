@@ -87,7 +87,10 @@ try {
   }
   if (!ready) throw new Error(`No arrancó el servidor de pruebas. ${logs}`);
   try {
-    await runAsync("node_modules/@playwright/test/cli.js", ["test"]);
+    await runAsync("node_modules/@playwright/test/cli.js", [
+      "test",
+      ...process.argv.slice(2),
+    ]);
   } catch (e) {
     console.error(logs);
     throw e;

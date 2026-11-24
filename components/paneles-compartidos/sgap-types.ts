@@ -67,7 +67,11 @@ export type Package = {
   locker: { codigo: string } | null;
   detalle_documento: Detail[];
   pago_pendiente: Pending[];
-  pago_anticipado: { monto: string; fecha: string } | null;
+  pago_anticipado: {
+    monto: string;
+    fecha: string;
+    movimiento?: unknown;
+  } | null;
   devolucion: { monto: string; fecha: string; motivo: string } | null;
 };
 export type Locker = {
@@ -114,6 +118,10 @@ export type Alert = {
   tipo: string;
 };
 export type Movement = {
+  id_operacion: string;
+  anulado_en: string | null;
+  observaciones: string | null;
+  empleado?: { persona: { nombre: string } };
   paquete?: { codigo: string };
   id_movimiento: string;
   id_paquete: string;
@@ -126,6 +134,8 @@ export type Movement = {
   id_devolucion: string | null;
 };
 export type Document = {
+  id_empleado: string;
+  empleado?: { persona: { nombre: string } };
   id_documento: string;
   tipo: string;
   fecha: string;
@@ -133,10 +143,23 @@ export type Document = {
   observaciones: string | null;
   cliente: Client | null;
   detalle_documento: {
-    paquete: { codigo: string };
+    id_detalle: string;
+    id_paquete: string;
+    anulado_en: string | null;
+    nombre_destinatario: string | null;
+    observaciones: string | null;
+    paquete: { codigo: string; id_paquete: string };
     ci_destinatario: string | null;
     telefono_destinatario: string | null;
   }[];
+};
+export type OperationAudit = {
+  entidad: string;
+  id_registro: string;
+  accion: string;
+  motivo: string;
+  fecha: string;
+  empleado?: { persona: { nombre: string } };
 };
 export type Balance = {
   id_sucursal: string;
@@ -149,6 +172,7 @@ export type Balance = {
   cantidad_devoluciones: number;
 };
 export type DashboardData = {
+  auditorias: OperationAudit[];
   usuario: {
     id: number;
     id_persona: string;
