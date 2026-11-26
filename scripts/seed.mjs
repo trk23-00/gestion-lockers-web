@@ -36,7 +36,13 @@ try {
     where: { nombre: "Central" },
   });
   for (const [nivel, nombre, correo, ci, cargo] of [
-    [1, "Administrador", "admin@lockers.local", "90000001", "administrador"],
+    [
+      5,
+      "SuperAdministrador",
+      "admin@lockers.local",
+      "90000001",
+      "administrador",
+    ],
     [2, "Recepción", "recepcion@lockers.local", "90000002", "recepcionista"],
     [3, "Almacén", "almacen@lockers.local", "90000003", "encargado_almacenes"],
     [4, "Cliente", "cliente@lockers.local", "90000004", null],

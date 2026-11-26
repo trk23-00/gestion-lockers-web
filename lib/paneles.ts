@@ -1,7 +1,11 @@
 export type PanelRole = "administrador" | "empleado" | "almacenes" | "cliente";
 
 export const panelPorNivel: Record<number, PanelRole> = {
-  1: "administrador", 2: "empleado", 3: "almacenes", 4: "cliente",
+  1: "administrador",
+  2: "empleado",
+  3: "almacenes",
+  4: "cliente",
+  5: "administrador",
 };
 
 export function rutaPanel(nivel: number) {

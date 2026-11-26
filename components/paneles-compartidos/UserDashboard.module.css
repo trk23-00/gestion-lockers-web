@@ -206,6 +206,9 @@
   margin-top: 1px;
 }
 .main {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
   margin-left: 272px;
   width: calc(100% - 272px);
   min-width: 0;
@@ -261,6 +264,7 @@
   font-weight: 700;
 }
 .content {
+  flex: 1;
   padding: 32px;
   display: flex;
   flex-direction: column;
@@ -482,6 +486,46 @@
 }
 .tableWrap {
   overflow: auto;
+}
+.listFilters {
+  margin: 0 0 18px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--canvas);
+}
+.listFilters summary {
+  cursor: pointer;
+  color: var(--brand);
+  font-weight: 600;
+}
+.filterFields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
+  gap: 12px;
+  align-items: end;
+  margin-top: 12px;
+}
+.filterFields label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  font-size: 12px;
+}
+.filterFields input,
+.filterFields select {
+  width: 100%;
+  min-width: 0;
+  height: 40px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: white;
+  color: var(--brand);
+}
+.filterFields button {
+  min-height: 40px;
 }
 .tableWrap table {
   border-collapse: collapse;

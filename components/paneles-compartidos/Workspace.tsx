@@ -3,6 +3,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import DailyCollections from "./DailyCollections";
+import { esAdministrador, NIVEL_SUPERADMINISTRADOR } from "@/lib/roles";
+import {
+  BranchFilterContext,
+  ListFilters,
+  useListFilters,
+} from "./ListFilters";
 import {
   useEffect,
   useRef,
@@ -16,7 +22,6 @@ import {
   type Locker,
   type Client,
   type Staff,
-  type Branch,
   type Transfer,
   type Alert,
   type Document,
@@ -50,21 +55,9 @@ export function Table<T>({
   actions?: (r: T) => ReactNode;
   exportName?: string;
 }) {
-  const [search, setSearch] = useState("");
+  const filters = useListFilters(rows, columns);
   const [page, setPage] = useState(1);
-  const filtered = rows.filter((r) =>
-    columns
-      .map((c) =>
-        c.search
-          ? c.search(r)
-          : typeof c.value(r) === "string" || typeof c.value(r) === "number"
-            ? String(c.value(r))
-            : "",
-      )
-      .join(" ")
-      .toLocaleLowerCase()
-      .includes(search.toLocaleLowerCase()),
-  );
+  const filtered = filters.filtered;
   const pages = Math.max(1, Math.ceil(filtered.length / 10)),
     current = Math.min(page, pages);
   function exportCSV() {
@@ -94,9 +87,9 @@ export function Table<T>({
           Buscar
           <input
             placeholder="Código, nombre o estado…"
-            value={search}
+            value={filters.search}
             onChange={(e) => {
-              setSearch(e.target.value);
+              filters.setSearch(e.target.value);
               setPage(1);
             }}
           />
@@ -108,6 +101,7 @@ export function Table<T>({
         )}
         <span>{filtered.length} registros</span>
       </div>
+      <ListFilters filters={filters} onChange={() => setPage(1)} />
       <div className={styles.tableWrap}>
         <table>
           <thead>
@@ -192,6 +186,7 @@ export function Card({
 }
 type Option = { value: string; label: string };
 type Field = {
+  readOnly?: boolean;
   name: string;
   label: string;
   type?: string;
@@ -296,6 +291,7 @@ function FormDialog({
       name: `${prefix}${field.name}`,
       required: field.required,
       disabled: busy,
+      readOnly: field.readOnly,
     };
     return (
       <label
@@ -722,6 +718,60 @@ function OperationDetailDialog({
   );
 }
 
+function RolesPermissions() {
+  return (
+    <details className={styles.listFilters}>
+      <summary>Cargos y accesos</summary>
+      <Card title="Permisos por cargo">
+        <Table
+          rows={[
+            {
+              cargo: "SuperAdministrador",
+              alcance: "Todas las sucursales",
+              tareas:
+                "Mismas operaciones del administrador; además, crea y promueve administradores. Cuenta reservada a admin@lockers.local.",
+            },
+            {
+              cargo: "Administrador",
+              alcance: "Todas las sucursales",
+              tareas:
+                "Recepción, entrega, ubicaciones, traslados, cuentas, caja, avisos y reportes; crea clientes y empleados, sin crear ni promover administradores",
+            },
+            {
+              cargo: "Recepcionista",
+              alcance: "Su sucursal",
+              tareas:
+                "Registrar recepción, cobros completos y entregas; corregir o anular entregas y cobros de su sucursal; crear y editar fichas de clientes; consultar lockers y traslados",
+            },
+            {
+              cargo: "Almacenero",
+              alcance: "Su sucursal",
+              tareas:
+                "Administrar lockers, ubicar paquetes, preparar y despachar traslados, recibir paquetes; consultar clientes vinculados",
+            },
+            {
+              cargo: "Cliente",
+              alcance: "Sus propios envíos",
+              tareas:
+                "Seguimiento, consulta de pagos, leer y ocultar sus avisos, actualizar su cuenta",
+            },
+          ]}
+          rowKey={(r) => r.cargo}
+          columns={[
+            { title: "Cargo", value: (r) => r.cargo },
+            { title: "Alcance", value: (r) => r.alcance },
+            { title: "Acceso", value: (r) => r.tareas },
+          ]}
+        />
+        <p className={styles.muted}>
+          Los cargos representan reglas del prototipo. Se aplican también en el
+          servidor.
+        </p>
+      </Card>
+    </details>
+  );
+}
+
 export default function Workspace({
   data,
   section,
@@ -737,10 +787,11 @@ export default function Workspace({
     null,
   );
   const nivel = data.usuario.nivel,
-    admin = nivel === 1,
-    staffReception = nivel === 1 || nivel === 2,
-    storage = nivel === 1 || nivel === 3,
+    admin = esAdministrador(nivel),
+    staffReception = admin || nivel === 2,
+    storage = admin || nivel === 3,
     client = nivel === 4;
+  const superAdmin = nivel === NIVEL_SUPERADMINISTRADOR;
   const branchId =
     branch ||
     data.usuario.id_sucursal ||
@@ -750,6 +801,27 @@ export default function Workspace({
       (p) => !branch || p.id_sucursal_actual === branch,
     ),
     lockers = data.lockers.filter((l) => !branch || l.id_sucursal === branch);
+  const branchLookup = Object.fromEntries(
+    data.sucursales.map((b) => [b.id_sucursal, b.nombre]),
+  );
+  const lockerListing = useListFilters(
+    lockers,
+    [
+      { title: "Locker", value: (l) => l.codigo },
+      { title: "Sucursal", value: (l) => l.sucursal.nombre },
+      { title: "Tamaño", value: (l) => sizeName(l.tamanio) },
+      {
+        title: "Estado",
+        value: (l) =>
+          !l.habilitado
+            ? "Deshabilitado"
+            : l.paquete
+              ? "Ocupado"
+              : "Disponible",
+      },
+    ],
+    branchLookup,
+  );
   const branchOptions = data.sucursales
     .filter(
       (b) => b.activa && (admin || b.id_sucursal === data.usuario.id_sucursal),
@@ -1050,7 +1122,8 @@ export default function Workspace({
       "clientes",
       [
         text("nombre", "Nombre", true),
-        text("apellido", "Apellidos", true),
+        text("apellido", "Apellidos (si corresponde)"),
+        { ...text("ci", "CI", true), readOnly: !!c.persona.ci },
         text("correo", "Correo de acceso", true, "email"),
         {
           ...text("password", "Contraseña inicial", true, "password"),
@@ -1063,6 +1136,7 @@ export default function Workspace({
         nombre: parts[0] || "",
         apellido: parts.slice(1).join(" "),
         correo: c.persona.correo || "",
+        ci: c.persona.ci || "",
       },
       "PATCH",
       {
@@ -1111,19 +1185,6 @@ export default function Workspace({
       l ? "PATCH" : "POST",
     );
   }
-  function branchForm(b?: Branch) {
-    open(
-      b ? "Editar sucursal" : "Nueva sucursal",
-      "sucursales",
-      [
-        text("nombre", "Nombre", true),
-        text("direccion", "Dirección"),
-        text("activa", "Activa", false, "checkbox"),
-      ],
-      b ? { ...b, id: b.id_sucursal } : { activa: true },
-      b ? "PATCH" : "POST",
-    );
-  }
   function staffForm(s: Staff) {
     open(
       "Editar empleado",
@@ -1132,19 +1193,33 @@ export default function Workspace({
         text("nombre", "Nombre", true),
         text("apellido", "Apellidos", true),
         text("ci", "CI", true),
-        text("correo", "Correo", true, "email"),
+        {
+          ...text("correo", "Correo", true, "email"),
+          readOnly: s.rol.nivel === 5,
+        },
         text("telefono", "Teléfono"),
         select("nivel", "Cargo", [
-          { value: "1", label: "Administrador" },
-          { value: "2", label: "Recepcionista" },
-          { value: "3", label: "Almacenero" },
+          ...(s.rol.nivel === 5
+            ? [{ value: "5", label: "SuperAdministrador" }]
+            : []),
+          ...(s.rol.nivel !== 5 && (superAdmin || s.rol.nivel === 1)
+            ? [{ value: "1", label: "Administrador" }]
+            : []),
+          ...(s.rol.nivel !== 5
+            ? [
+                { value: "2", label: "Recepcionista" },
+                { value: "3", label: "Almacenero" },
+              ]
+            : []),
         ]),
         select("id_sucursal", "Sucursal", allBranches),
         {
           ...text("password", "Nueva contraseña (opcional)", false, "password"),
           help: "Al menos 8 caracteres.",
         },
-        text("activo", "Cuenta activa", false, "checkbox"),
+        ...(s.rol.nivel === 5
+          ? []
+          : [text("activo", "Cuenta activa", false, "checkbox")]),
       ],
       {
         ...s,
@@ -1720,60 +1795,12 @@ export default function Workspace({
       </>
     );
   } else if (section === "almacenes") {
-    if (tab === "Sucursales")
-      content = (
-        <Card
-          title="Sucursales"
-          action={
-            <button className={styles.primary} onClick={() => branchForm()}>
-              Nueva sucursal
-            </button>
-          }
-        >
-          <Table
-            rows={data.sucursales}
-            rowKey={(b) => b.id_sucursal}
-            columns={[
-              { title: "Sucursal", value: (b) => b.nombre },
-              { title: "Dirección", value: (b) => b.direccion || "—" },
-              {
-                title: "Estado",
-                value: (b) => (b.activa ? "Activa" : "Inactiva"),
-              },
-            ]}
-            actions={(b) => (
-              <>
-                <button
-                  className={styles.textButton}
-                  onClick={() => branchForm(b)}
-                >
-                  Editar
-                </button>
-                <button
-                  className={styles.textButton}
-                  onClick={() =>
-                    remove("Eliminar sucursal", "sucursales", {
-                      id: b.id_sucursal,
-                    })
-                  }
-                >
-                  Eliminar
-                </button>
-              </>
-            )}
-          />
-        </Card>
-      );
-    else if (
-      ["Por ubicar", "Reubicaciones", "Ubicación de paquetes"].includes(tab)
-    )
+    if (["Por ubicar", "Reubicaciones", "Ubicación de paquetes"].includes(tab))
       content = (
         <Card title={tab}>
           {packageTable(
             packages.filter((p) =>
-              tab === "Por ubicar"
-                ? p.estado === "recibido" && !p.id_locker
-                : ["recibido", "almacenado"].includes(p.estado),
+              ["recibido", "almacenado"].includes(p.estado),
             ),
             storage
               ? (p) => (
@@ -1808,19 +1835,22 @@ export default function Workspace({
           </div>
           <Card
             title={
-              tab === "Administración de lockers"
-                ? "Administración de lockers"
-                : "Ocupación por locker"
+              tab === "Actualizar lockers"
+                ? "Actualizar lockers"
+                : tab === "Nuevo locker"
+                  ? "Nuevo locker"
+                  : "Disponibilidad de lockers"
             }
             action={
-              storage && (
+              storage &&
+              tab === "Nuevo locker" && (
                 <button className={styles.primary} onClick={() => lockerForm()}>
                   Nuevo locker
                 </button>
               )
             }
           >
-            {tab === "Administración de lockers" ? (
+            {tab === "Actualizar lockers" ? (
               <Table
                 rows={lockers}
                 rowKey={(l) => l.id_locker}
@@ -1849,50 +1879,73 @@ export default function Workspace({
                     </button>
                     <button
                       className={styles.textButton}
-                      disabled={!!l.paquete}
+                      disabled={!!l.paquete || !l.habilitado}
                       onClick={() =>
-                        remove("Eliminar locker", "lockers", {
-                          id: l.id_locker,
-                          id_sucursal: l.id_sucursal,
-                          tamanio: l.tamanio,
-                        })
+                        open(
+                          "Deshabilitar locker",
+                          "lockers",
+                          [],
+                          {
+                            id: l.id_locker,
+                            accion: "deshabilitar",
+                          },
+                          "PATCH",
+                          {
+                            help: `${l.codigo} dejará de estar disponible para nuevas asignaciones. Se conservarán el locker y su historial.`,
+                          },
+                        )
                       }
                     >
-                      Eliminar
+                      Deshabilitar
                     </button>
                   </>
                 )}
               />
             ) : (
-              <div className={styles.lockerGrid}>
-                {lockers.map((l) => (
-                  <button
-                    key={l.id_locker}
-                    className={`${styles.locker} ${!l.habilitado ? styles.disabledLocker : l.paquete ? styles.occupiedLocker : styles.freeLocker}`}
-                    onClick={() => {
-                      const p = data.paquetes.find(
-                        (p) => p.id_paquete === l.paquete?.id_paquete,
-                      );
-                      if (p) packageDetail(p);
-                      else if (storage) lockerForm(l);
-                    }}
-                  >
-                    <span>{l.sucursal.nombre}</span>
-                    <strong>{l.codigo}</strong>
-                    <small>{sizeName(l.tamanio)}</small>
-                    <b>
-                      {!l.habilitado
-                        ? "Deshabilitado"
-                        : l.paquete?.codigo || "Disponible"}
-                    </b>
-                  </button>
-                ))}
-                {!lockers.length && (
-                  <p className={styles.muted}>
-                    No hay lockers registrados en esta sucursal.
-                  </p>
-                )}
-              </div>
+              <>
+                <div className={styles.tableTools}>
+                  <label>
+                    Buscar
+                    <input
+                      placeholder="Código, sucursal o estado…"
+                      value={lockerListing.search}
+                      onChange={(e) => lockerListing.setSearch(e.target.value)}
+                    />
+                  </label>
+                  <span>{lockerListing.filtered.length} registros</span>
+                </div>
+                <ListFilters filters={lockerListing} />
+                <div className={styles.lockerGrid}>
+                  {lockerListing.filtered.map((l) => (
+                    <button
+                      key={l.id_locker}
+                      className={`${styles.locker} ${!l.habilitado ? styles.disabledLocker : l.paquete ? styles.occupiedLocker : styles.freeLocker}`}
+                      onClick={() => {
+                        const p = data.paquetes.find(
+                          (p) => p.id_paquete === l.paquete?.id_paquete,
+                        );
+                        if (p) packageDetail(p);
+                        else if (storage) lockerForm(l);
+                      }}
+                    >
+                      <span>{l.sucursal.nombre}</span>
+                      <strong>{l.codigo}</strong>
+                      <small>{sizeName(l.tamanio)}</small>
+                      <b>
+                        {!l.habilitado
+                          ? "Deshabilitado"
+                          : l.paquete?.codigo || "Disponible"}
+                      </b>
+                    </button>
+                  ))}
+                  {!lockerListing.filtered.length && (
+                    <p className={styles.muted}>
+                      No hay lockers que coincidan con la búsqueda y los
+                      filtros.
+                    </p>
+                  )}
+                </div>
+              </>
             )}
           </Card>
         </>
@@ -2099,50 +2152,7 @@ export default function Workspace({
         </Card>
       );
   } else if (section === "usuarios") {
-    if (tab === "Cargos y accesos")
-      content = (
-        <Card title="Permisos por cargo">
-          <Table
-            rows={[
-              {
-                cargo: "Administrador",
-                alcance: "Todas las sucursales",
-                tareas:
-                  "Recepción, entrega, ubicaciones, traslados, cuentas, caja, avisos y reportes",
-              },
-              {
-                cargo: "Recepcionista",
-                alcance: "Su sucursal",
-                tareas:
-                  "Registrar recepción, cobros completos y entregas; corregir o anular entregas y cobros de su sucursal; crear y editar fichas de clientes; consultar lockers y traslados",
-              },
-              {
-                cargo: "Almacenero",
-                alcance: "Su sucursal",
-                tareas:
-                  "Administrar lockers, ubicar paquetes, preparar y despachar traslados, recibir paquetes; consultar clientes vinculados",
-              },
-              {
-                cargo: "Cliente",
-                alcance: "Sus propios envíos",
-                tareas:
-                  "Seguimiento, consulta de pagos, leer y ocultar sus avisos, actualizar su cuenta",
-              },
-            ]}
-            rowKey={(r) => r.cargo}
-            columns={[
-              { title: "Cargo", value: (r) => r.cargo },
-              { title: "Alcance", value: (r) => r.alcance },
-              { title: "Acceso", value: (r) => r.tareas },
-            ]}
-          />
-          <p className={styles.muted}>
-            Los cargos representan reglas del prototipo. Se aplican también en
-            el servidor.
-          </p>
-        </Card>
-      );
-    else if (tab === "Nuevo usuario")
+    if (tab === "Nuevo usuario")
       content = (
         <>
           <div className={styles.twoColumns}>
@@ -2155,8 +2165,11 @@ export default function Workspace({
               }
             >
               <p className={styles.muted}>
-                Registre al personal que utilizará el sistema. Podrá asignar un
-                cargo y una sucursal desde el formulario.
+                Registre al personal que utilizará el sistema y asigne su cargo
+                y sucursal.
+                {superAdmin
+                  ? " También puede crear cuentas de administrador."
+                  : " La creación de administradores corresponde al SuperAdministrador."}
               </p>
             </Card>
             <Card
@@ -2179,28 +2192,28 @@ export default function Workspace({
               ficha, sin duplicar su información ni su historial.
             </p>
             <Table
-              rows={data.clientes.filter(
-                (c) =>
-                  !c.persona.usuario &&
-                  c.persona.activo &&
-                  Boolean(c.persona.ci),
-              )}
+              rows={data.clientes.filter((c) => !c.persona.usuario)}
               rowKey={(c) => c.id_cliente}
               columns={[
                 { title: "Cliente", value: (c) => c.persona.nombre },
                 { title: "CI", value: (c) => c.persona.ci || "—" },
                 { title: "Teléfono", value: (c) => c.persona.telefono || "—" },
                 { title: "Correo", value: (c) => c.persona.correo || "—" },
+                {
+                  title: "Estado",
+                  value: (c) => (c.persona.activo ? "Activo" : "Inactivo"),
+                },
               ]}
               actions={(c) => (
                 <button
                   className={styles.textButton}
+                  disabled={!c.persona.activo}
                   onClick={() => createCustomerAccess(c)}
                 >
                   Crear acceso
                 </button>
               )}
-              empty="No hay clientes activos sin cuenta y con CI registrado."
+              empty="Todos los clientes registrados ya tienen una cuenta de acceso."
             />
           </Card>
         </>
@@ -2251,6 +2264,7 @@ export default function Workspace({
               ]}
             />
           </Card>
+          <RolesPermissions />
         </>
       );
     else if (tab === "Actualizar usuario")
@@ -2279,6 +2293,7 @@ export default function Workspace({
                 <button
                   className={styles.textButton}
                   onClick={() => staffForm(s)}
+                  disabled={s.rol.nivel === 5 && !superAdmin}
                 >
                   Editar
                 </button>
@@ -2660,7 +2675,7 @@ export default function Workspace({
       </Card>
     );
   return (
-    <>
+    <BranchFilterContext.Provider value={branchLookup}>
       {section === "pagos" &&
         ["Cobros realizados", "Realizados"].includes(tab) && (
           <Card title="Cobros de hoy">
@@ -2707,7 +2722,7 @@ export default function Workspace({
           }}
         />
       )}
-    </>
+    </BranchFilterContext.Provider>
   );
 }
 

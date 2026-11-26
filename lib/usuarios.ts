@@ -1,5 +1,6 @@
 import bcrypt from "bcrypt";
 import { prisma } from "@/lib/prisma";
+import { esAdministrador } from "@/lib/roles";
 import { respuestaError, respuestaOk } from "@/lib/api";
 import {
   type DatosUsuario,
@@ -62,12 +63,11 @@ export async function registrarUsuario(
     else {
       const cargo = await tx.cargo.findUniqueOrThrow({
         where: {
-          nombre:
-            nivel === 1
-              ? "administrador"
-              : nivel === 2
-                ? "recepcionista"
-                : "encargado_almacenes",
+          nombre: esAdministrador(nivel)
+            ? "administrador"
+            : nivel === 2
+              ? "recepcionista"
+              : "encargado_almacenes",
         },
       });
       await tx.empleado.create({

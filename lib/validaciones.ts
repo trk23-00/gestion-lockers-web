@@ -1,4 +1,5 @@
 export const NIVEL_ROL = {
+  SUPERADMINISTRADOR: 5,
   ADMINISTRADOR: 1,
   RECEPCIONISTA: 2,
   ALMACENERO: 3,
@@ -58,7 +59,14 @@ export function validarUsuario(datos: DatosUsuario, requiereTelefono: boolean) {
   const correo = datos.correo.trim();
   const telefono = (datos.telefono ?? "").trim();
 
-  if (!nombre || !apellido || !ci || !correo || !datos.password || (requiereTelefono && !telefono)) {
+  if (
+    !nombre ||
+    !apellido ||
+    !ci ||
+    !correo ||
+    !datos.password ||
+    (requiereTelefono && !telefono)
+  ) {
     return "Debe llenar todos los campos";
   }
 

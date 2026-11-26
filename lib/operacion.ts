@@ -3,6 +3,11 @@ import bcrypt from "bcrypt";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { obtenerUsuarioSesion } from "@/lib/sesion";
+import {
+  esAdministrador,
+  nivelOperativo,
+  NIVEL_SUPERADMINISTRADOR,
+} from "@/lib/roles";
 
 type Sesion = NonNullable<Awaited<ReturnType<typeof obtenerUsuarioSesion>>>;
 type Body = Record<string, unknown>;
@@ -72,7 +77,7 @@ function elegir(value: unknown, opciones: string[]) {
 }
 function permitir(s: Sesion, ...niveles: number[]) {
   exigir(
-    niveles.includes(s.rol.nivel),
+    niveles.includes(nivelOperativo(s.rol.nivel)),
     "Su perfil no permite esta operación.",
     403,
   );
@@ -80,14 +85,14 @@ function permitir(s: Sesion, ...niveles: number[]) {
 function sucursal(s: Sesion, value: unknown) {
   const branch = id(value);
   exigir(
-    s.rol.nivel === 1 || branch === s.persona.empleado?.id_sucursal,
+    esAdministrador(s.rol.nivel) || branch === s.persona.empleado?.id_sucursal,
     "La operación pertenece a otra sucursal.",
     403,
   );
   return branch;
 }
 function filtroPaquete(s: Sesion): Prisma.paqueteWhereInput {
-  if (s.rol.nivel === 1) return {};
+  if (esAdministrador(s.rol.nivel)) return {};
   if (s.rol.nivel === 4)
     return {
       OR: [
@@ -132,7 +137,7 @@ const personaSelect = {
 export async function consultarDatos(s: Sesion) {
   // El trabajo periódico realiza lo mismo sin depender de que alguien abra el panel.
   await prisma.$queryRaw`SELECT generar_recargos()`;
-  const admin = s.rol.nivel === 1,
+  const admin = esAdministrador(s.rol.nivel),
     client = s.rol.nivel === 4,
     branch = s.persona.empleado?.id_sucursal;
   const pkgWhere = filtroPaquete(s);
@@ -353,7 +358,7 @@ export async function modificar(
     clientes: ["POST", "PATCH"],
     personal: ["POST", "PATCH"],
     sucursales: ["POST", "PATCH", "DELETE"],
-    lockers: ["POST", "PATCH", "DELETE"],
+    lockers: ["POST", "PATCH"],
     recepciones: ["POST"],
     paquetes: ["PATCH"],
     ubicaciones: ["PATCH"],
@@ -375,7 +380,7 @@ export async function modificar(
   );
   return prisma.$transaction(
     async (tx) => {
-      const nivel = s.rol.nivel;
+      const nivel = nivelOperativo(s.rol.nivel);
       if (recurso === "correcciones_entrega") {
         permitir(s, 1, 2);
         camposCorreccion(b, [
@@ -583,16 +588,17 @@ export async function modificar(
             "El cliente ya tiene una cuenta o está inactivo.",
           );
           const nombre = texto(b.nombre, 100, true),
-            apellido = texto(b.apellido, 100, true);
+            apellido = texto(b.apellido, 100);
           exigir(
             `${nombre} ${apellido}`.length <= 150,
             "El nombre completo no debe superar 150 caracteres.",
           );
           const correo = texto(b.correo, 150, true).toLowerCase();
           exigir(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo), "Correo inválido.");
+          const ci = texto(b.ci ?? c.persona.ci, 20, true);
           exigir(
-            c.persona.ci && c.persona.ci.length <= 20,
-            "Registre un CI de hasta 20 caracteres en la ficha del cliente.",
+            !c.persona.ci || ci === c.persona.ci,
+            "El CI registrado del cliente debe conservarse.",
           );
           const password = texto(b.password, 200, true);
           exigir(
@@ -604,7 +610,7 @@ export async function modificar(
             data: {
               nombre,
               apellido,
-              ci: c.persona.ci,
+              ci,
               correo,
               telefono: c.persona.telefono,
               password: await bcrypt.hash(password, 10),
@@ -614,7 +620,7 @@ export async function modificar(
           });
           await tx.persona.update({
             where: { id_persona: c.id_cliente },
-            data: { nombre: `${nombre} ${apellido}`, correo },
+            data: { nombre: `${nombre} ${apellido}`.trim(), correo, ci },
           });
           return { id: c.id_cliente };
         }
@@ -653,8 +659,46 @@ export async function modificar(
       }
       if (recurso === "personal") {
         permitir(s, 1);
-        const level = numero(b.nivel, 1, 3);
-        exigir(Number.isInteger(level), "Cargo inválido.");
+        const account =
+          method === "PATCH"
+            ? await tx.usuario.findUnique({
+                where: { id: Number(b.id) },
+                include: { rol: true },
+              })
+            : null;
+        if (method === "PATCH")
+          exigir(
+            account && account.rol.nivel !== 4,
+            "Empleado inexistente.",
+            404,
+          );
+        const level = numero(b.nivel, 1, 5);
+        exigir([1, 2, 3, 5].includes(level), "Cargo inválido.");
+        const superAdmin = s.rol.nivel === NIVEL_SUPERADMINISTRADOR;
+        exigir(
+          level !== 5 || (account?.rol.nivel === 5 && superAdmin),
+          "No se pueden crear ni promover cuentas a SuperAdministrador.",
+          403,
+        );
+        exigir(
+          account?.rol.nivel !== 5 || superAdmin,
+          "Solo el SuperAdministrador puede modificar su cuenta.",
+          403,
+        );
+        exigir(
+          account?.rol.nivel !== 5 ||
+            (level === 5 &&
+              b.activo !== false &&
+              texto(b.correo, 150, true).toLowerCase() === account.correo),
+          "El SuperAdministrador debe conservar su rol, correo y acceso activo.",
+        );
+        exigir(
+          level !== 1 ||
+            superAdmin ||
+            (method === "PATCH" && account?.rol.nivel === 1),
+          "Solo el SuperAdministrador puede crear o promover administradores.",
+          403,
+        );
         const branch = id(b.id_sucursal);
         await branchActiva(tx, branch);
         const role = await tx.rol.findUniqueOrThrow({
@@ -662,12 +706,11 @@ export async function modificar(
         });
         const job = await tx.cargo.findUniqueOrThrow({
           where: {
-            nombre:
-              level === 1
-                ? "administrador"
-                : level === 2
-                  ? "recepcionista"
-                  : "encargado_almacenes",
+            nombre: esAdministrador(level)
+              ? "administrador"
+              : level === 2
+                ? "recepcionista"
+                : "encargado_almacenes",
           },
         });
         const nombre = texto(b.nombre, 100, true),
@@ -713,17 +756,13 @@ export async function modificar(
           });
           return { id: p.id_persona };
         }
-        const account = await tx.usuario.findUnique({
-          where: { id: Number(b.id) },
-          include: { rol: true },
-        });
         exigir(
           account && account.rol.nivel !== 4,
           "Empleado inexistente.",
           404,
         );
         exigir(
-          account.id !== s.id || (b.activo !== false && level === 1),
+          account.id !== s.id || (b.activo !== false && esAdministrador(level)),
           "No puede quitarse su propio acceso de administrador.",
         );
         const activo = b.activo !== false;
@@ -783,6 +822,24 @@ export async function modificar(
       }
       if (recurso === "lockers") {
         permitir(s, 1, 3);
+        if (b.accion === "deshabilitar") {
+          exigir(method === "PATCH", "Método inválido.", 405);
+          const locker = await tx.locker.findUnique({
+            where: { id_locker: id(b.id) },
+            include: { paquete: true },
+          });
+          exigir(locker, "Locker inexistente.", 404);
+          sucursal(s, String(locker.id_sucursal));
+          exigir(
+            !locker.paquete,
+            "Reubique el paquete antes de deshabilitar este locker.",
+            409,
+          );
+          return tx.locker.update({
+            where: { id_locker: locker.id_locker },
+            data: { habilitado: false },
+          });
+        }
         const branch = sucursal(s, b.id_sucursal);
         await branchActiva(tx, branch);
         const size = numero(b.tamanio, 1, 3);
@@ -806,8 +863,6 @@ export async function modificar(
           !l.paquete,
           "Libere o reubique el paquete antes de modificar este locker.",
         );
-        if (method === "DELETE")
-          return tx.locker.delete({ where: { id_locker: l.id_locker } });
         return tx.locker.update({
           where: { id_locker: l.id_locker },
           data: {

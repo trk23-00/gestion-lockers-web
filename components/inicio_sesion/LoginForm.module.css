@@ -26,6 +26,36 @@
   opacity: 1;
 }
 
+.passwordField {
+  position: relative;
+  width: 100%;
+}
+.passwordField input {
+  padding-right: 3.25rem;
+}
+.passwordToggle {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 36px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #714316;
+  cursor: pointer;
+}
+.passwordToggle:hover {
+  background: #fff0d9;
+}
+.passwordToggle:focus-visible {
+  outline: 2px solid #714316;
+  outline-offset: 1px;
+}
+
 .inputGroup input:focus,
 .inputGroup select:focus {
   border-color: #e79b27;

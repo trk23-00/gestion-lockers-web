@@ -41,13 +41,7 @@ const sections: Record<string, Section> = {
     label: "Almacenes y lockers",
     icon: "imgSvg2.svg",
     group: "OPERACIÓN",
-    tabs: [
-      "Ocupación",
-      "Por ubicar",
-      "Reubicaciones",
-      "Administración de lockers",
-      "Sucursales",
-    ],
+    tabs: ["Nuevo locker", "Por ubicar", "Actualizar lockers"],
     description:
       "Consulta la disponibilidad y organiza las ubicaciones de los paquetes.",
   },
@@ -74,12 +68,7 @@ const sections: Record<string, Section> = {
     label: "Usuarios",
     icon: "imgSvg5.svg",
     group: "GESTIÓN",
-    tabs: [
-      "Nuevo usuario",
-      "Usuarios registrados",
-      "Actualizar usuario",
-      "Cargos y accesos",
-    ],
+    tabs: ["Nuevo usuario", "Usuarios registrados", "Actualizar usuario"],
     description: "Administra clientes, personal y accesos al sistema.",
   },
   clientes: {
@@ -154,7 +143,7 @@ export function navigation(role: PanelRole): Section[] {
     if (role === "empleado" && id === "pagos") item.group = "OPERACIÓN";
 
     if (role === "empleado" && id === "almacenes")
-      item.tabs = ["Disponibilidad", "Ubicación de paquetes", "Por ubicar"];
+      item.tabs = ["Disponibilidad", "Por ubicar"];
     if (role === "empleado" && id === "traslados")
       item.tabs = ["En curso", "Historial"];
     if (role === "almacenes" && id === "almacenes")

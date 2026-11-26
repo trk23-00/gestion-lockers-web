@@ -5,10 +5,24 @@ import { useRouter } from "next/navigation";
 import { panelPorNivel, rutaPanel, type PanelRole } from "@/lib/paneles";
 import { type DashboardData } from "./sgap-types";
 import { navigation } from "./sgap-navigation";
+import { esAdministrador } from "@/lib/roles";
 import Workspace from "./Workspace";
+import PublicFooter from "@/components/General-frames/PublicFooter";
 import styles from "./UserDashboard.module.css";
 
-const submenuSections = ["recepcion", "entregas", "pagos", "usuarios"];
+const submenuSections = [
+  "recepcion",
+  "entregas",
+  "pagos",
+  "usuarios",
+  "almacenes",
+];
+const legacyStorageViews: Record<string, string> = {
+  Ocupación: "Nuevo locker",
+  Reubicaciones: "Por ubicar",
+  "Ubicación de paquetes": "Por ubicar",
+  "Administración de lockers": "Actualizar lockers",
+};
 const legacyPaymentViews: Record<string, string> = {
   "Por cobrar": "Registrar cobro",
   Cobros: "Cobros realizados",
@@ -31,7 +45,7 @@ export default function UserDashboard({ role }: { role: PanelRole }) {
   const title =
     section === "cuenta"
       ? "Mi cuenta"
-      : ["recepcion", "entregas", "pagos"].includes(section)
+      : ["recepcion", "entregas", "pagos", "almacenes"].includes(section)
         ? `${current?.label || ""} / ${tab || current?.tabs[0] || ""}`
         : section === "usuarios"
           ? tab || "Usuarios"
@@ -87,11 +101,15 @@ export default function UserDashboard({ role }: { role: PanelRole }) {
           : id === "recepcion" && requestedTab === "Recepción"
             ? "Nueva recepción"
             : id === "usuarios" &&
-                ["Personal", "Clientes"].includes(requestedTab)
+                ["Personal", "Clientes", "Cargos y accesos"].includes(
+                  requestedTab,
+                )
               ? "Usuarios registrados"
               : id === "pagos"
                 ? legacyPaymentViews[requestedTab] || requestedTab
-                : requestedTab;
+                : id === "almacenes"
+                  ? legacyStorageViews[requestedTab] || requestedTab
+                  : requestedTab;
       const mod = navigation(role).find((m) => m.id === id);
       setSection(mod ? id : id === "cuenta" ? "cuenta" : "general");
       setTab(mod?.tabs.includes(wanted) ? wanted : mod?.tabs[0] || "");
@@ -330,7 +348,7 @@ export default function UserDashboard({ role }: { role: PanelRole }) {
               </p>
             </div>
             <div className={styles.branchFilter}>
-              {data?.usuario.nivel === 1 && (
+              {data && esAdministrador(data.usuario.nivel) && (
                 <>
                   <label className={styles.srOnly} htmlFor="branch-filter">
                     Filtrar sucursal
@@ -418,6 +436,7 @@ export default function UserDashboard({ role }: { role: PanelRole }) {
             )
           )}
         </main>
+        <PublicFooter variant="sgap" />
       </div>
     </div>
   );

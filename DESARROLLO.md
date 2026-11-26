@@ -34,7 +34,7 @@ El modo CAPTCHA local muestra una casilla de verificación durante `npm run dev`
 
 | Perfil        | Correo                    | Panel                    |
 | ------------- | ------------------------- | ------------------------ |
-| Administrador | `admin@lockers.local`     | `/paneles/administrador` |
+| SuperAdministrador | `admin@lockers.local`     | `/paneles/administrador` |
 | Recepcionista | `recepcion@lockers.local` | `/paneles/empleado`      |
 | Almacenero    | `almacen@lockers.local`   | `/paneles/almacenes`     |
 | Cliente       | `cliente@lockers.local`   | `/paneles/cliente`       |
@@ -98,8 +98,7 @@ Para volver a iniciarla: `docker compose start`. El volumen `lockers_postgres` c
 | ---------------------- | ------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------ | -------------------------------------- |
 | Recepción y documentos | Registrar varios paquetes, consultar documentos y corregir descripción/peso                 | Mismas tareas en su sucursal                                                       | Sin escritura                                                | Consulta de sus paquetes               |
 | Entrega                | Entregar varios paquetes con saldo cero                                                     | Entregar en su sucursal                                                            | Sin escritura                                                | Seguimiento                            |
-| Sucursales             | Crear, consultar, editar y eliminar si no tienen referencias; activar/desactivar            | Consulta                                                                           | Consulta                                                     | Nombres de sucursales para seguimiento |
-| Lockers                | Crear, consultar, editar, eliminar si están libres y sin historial                          | Disponibilidad y ubicación, consulta                                               | Gestión en su sucursal y ubicación/reubicación de paquetes   | Ubicación de sus paquetes              |
+| Lockers                | Crear, consultar, editar y deshabilitar lockers libres, conservando su historial            | Disponibilidad y ubicación, consulta                                               | Gestión en su sucursal y ubicación/reubicación de paquetes   | Ubicación de sus paquetes              |
 | Traslados              | Preparar, editar/eliminar preparados, despachar y recibir cada paquete                      | Consulta de traslados de su sucursal                                               | Preparar/despachar desde su sucursal; recibir en su sucursal | Seguimiento de sus paquetes            |
 | Clientes               | Crear, consultar, editar y eliminar fichas sin historial; desactivar                        | Crear/editar fichas y consultar                                                    | Consulta de clientes vinculados a su sucursal                | Mi cuenta                              |
 | Personal               | Crear/editar cuentas, cargo, sucursal, contraseña y estado; eliminar si no tiene historial  | Sin acceso                                                                         | Sin acceso                                                   | Sin acceso                             |
@@ -108,6 +107,18 @@ Para volver a iniciarla: `docker compose start`. El volumen `lockers_postgres` c
 | Reportes               | Operación, ocupación, traslados, caja diaria y mensual; exportar CSV                        | Sin acceso                                                                         | Sin acceso                                                   | Sin acceso                             |
 
 Los permisos se comprueban en el servidor, aunque se invoque la API directamente. El recepcionista no despacha ni confirma traslados. El almacenero no modifica cuentas ni roles. El cliente solo ve paquetes en los que figura como remitente o como destinatario explícitamente vinculado; coincidir en teléfono o CI no concede acceso. El nombre visible Clientes del panel de almacenes sigue el diseño actualizado de Figma.
+
+### Actualización de roles, lockers y filtros
+
+Después de descargar estos cambios ejecute `npm run db:migrate` y reinicie la aplicación. La migración `202611240002_superadministrador` agrega el nivel 5 y asigna ese rol a `admin@lockers.local`, sin cambiar su contraseña. En instalaciones nuevas, `npm run setup` crea esa misma cuenta con el nuevo rol.
+
+SuperAdministrador y Administrador comparten las funciones operativas del panel. Solo el SuperAdministrador puede crear o promover administradores; los demás administradores pueden crear clientes y empleados. El rol especial está reservado a la cuenta raíz, cuyo correo, rol y acceso activo quedan protegidos. Estas reglas se validan también en las API.
+
+Almacenes y lockers contiene los submenús **Nuevo locker**, **Por ubicar** y **Actualizar lockers**. Por ubicar reúne asignación y reubicación. Deshabilitar un locker conserva su registro y sus referencias; si está ocupado, primero debe reubicarse el paquete. Las sucursales se mantienen como datos para la operación, sin una vista de administración en este menú.
+
+En Usuarios registrados se incluye el desplegable **Cargos y accesos**. Nuevo usuario permite crear acceso a una ficha de cliente existente, completando su CI si falta y conservando sus paquetes e historial; no crea otra persona.
+
+Los listados incluyen búsqueda y filtros desplegables según los datos disponibles: estado, tamaño, modalidad de pago, sucursal, origen/destino, cargo, tipo, medio de pago y fechas. Los filtros se combinan con la búsqueda, la paginación y la exportación CSV. Las fechas de operación se interpretan en la zona horaria America/La_Paz.
 
 Los documentos emitidos, los cobros, los avisos realizados y los balances conservan su historial. No tienen edición/eliminación arbitraria: se utilizan entrega, devolución total, desactivación o lectura/ocultación según el proceso. La eliminación de un paquete solo está disponible para el administrador, antes de entrega/traslado/cobro/aviso y sin historial asociado. Las tarifas se guardan por paquete, por lo que editar la configuración no cambia cargos anteriores.
 
